@@ -127,7 +127,7 @@ sample_006	1	71	F	-0.131	-0.044
   
 * **Step 1**: Split VCF by Ancestry
 ```
-Rscript step1_vcf_split_by_ancestry \
+Rscript step1_vcf_split_by_ancestry.R \
   --bed /path/to/plink/bed \
   --bim /path/to/plink/bim \
   --fam /path/to/plink/fam \
