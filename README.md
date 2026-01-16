@@ -99,6 +99,9 @@ Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ an
     * bcftools > 1.20
     * bgzip
     * tabix
+* **Installation**:
+  * No installation is needed, just copy the `./src` to your local machine
+
 * **Input**: 
   * plink file that contains ancestry matrix
   * vcf file that contains variant matrix, <u>highly suggest do it by chrosomes for the sake of memory</u>.
