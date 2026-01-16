@@ -53,7 +53,7 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 
 ### Ancestry Specific Variant Matrix Split
 
-| Ancestry            | Genotype               | Frequency | Condition              | $\bm x_{AFR,AFR}$ | $\bm x_{EUR,EUR}$ |
+| Ancestry            | Genotype               | Frequency | Condition              | $\mathbf x_{AFR,AFR}$ | $\mathbf x_{EUR,EUR}$ |
 |---------------------|------------------------|-----------|------------------------|:-----------------:|:-----------------:|
 | **AFR,AFR (03)**    | 1/1 (2)                | $N_1$     | (pt = 3 & gt = 2)      | 2                | 0                |
 |                     | 1/0 (1), 0/1 (1)       | $N_2$     | (pt = 3 & gt = 1)      | 1                | 0                |
@@ -66,22 +66,17 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 |                     | 0/0 (0)                | $N_9$     | (pt = 1 & gt = 0)      | 0                | 0                |
 
 To obtain the $p_1$ and $p_2$, we use the following formulas.
-\[
-p_1 = \frac{2N_1 + N_2 + N_4}{2N_1 + N_2 + 2N_4 + 2N_7 + N_8}
-\]
+$$p_1 = (2*N_1 + N_2 + N_4) / (2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8)$$
 
-\[
-p_2 = \frac{N_4 + 2N_7 + N_8}{2N_1 + N_2 + 2N_4 + 2N_7 + N_8}
-\]
-
-* Special Case: When singleton SNP has an ancestry of AFR,EUR(i.e., $N_5 = 1 \quad \& \quad N_1, \cdots N_9 = 0$), we assign $p_1 = p_2 = 0.5$
+$$p_2 = (N_4 + 2*N_7 + N_8) / (2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8)$$
+* Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ and $N_1..N_9 = 0$, then $p_1 = p_2 = 0.5$.
 
 
 ### Association Detection
 
-* Pure African association: $\bm x_{AFR,AFR} \sim \text{Response} \to p_{a}$
-* Pure European association: $\bm x_{EUR,EUR} \sim \text{Response} \to p_{e}$
-* Observation association: $\bm x_{obs} \sim \text{Response} \to p_{obs}$
+* Pure African association: $\mathbf x_{AFR,AFR} \sim \text{Response} \to p_{a}$
+* Pure European association: $\mathbf x_{EUR,EUR} \sim \text{Response} \to p_{e}$
+* Observation association: $\mathbf x_{obs} \sim \text{Response} \to p_{obs}$
 * Cauchy-Weighted combination between $p_a$ and $p_e$, result $p_c$.
 
 
