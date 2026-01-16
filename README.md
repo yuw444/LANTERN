@@ -65,7 +65,10 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 |                     | 1/0 (1), 0/1 (1)       | $N_8$     | (pt = 1 & gt = 1)      | 0                | 1                |
 |                     | 0/0 (0)                | $N_9$     | (pt = 1 & gt = 0)      | 0                | 0                |
 
-To obtain the $p_1$ and $p_2$, we use the following formulas. $p_1 = \frac{(2*N_1 + N_2 + N_4)}{(2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8)}$ and $p_2 = (N_4 + 2*N_7 + N_8) / (2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8)$.
+To obtain the $p_1$ and $p_2$, we use the following formulas. 
+
+$p_1 = \frac{2*N_1 + N_2 + N_4}{2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8}$
+$p_2 = \frac{N_4 + 2*N_7 + N_8} {2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8}$.
 * Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ and $N_1..N_9 = 0$, then $p_1 = p_2 = 0.5$.
 
 
