@@ -8,7 +8,7 @@ option_list <- list(
     metavar = "file"
   ),
   make_option(
-    c("-g", "--gene"),
+    c("-g", "--gene_group"),
     type = "character",
     default = "gene_group.tsv",
     help = "Path to gene group TSV file [default %default]",

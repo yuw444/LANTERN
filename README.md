@@ -103,7 +103,7 @@ Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ an
   * plink file that contains ancestry matrix
   * vcf file that contains variant matrix, <u>highly suggest do it by chrosomes for the sake of memory</u>.
   * kinship matrix rds `kinship_rds` file, with column name as `id`.
-  * gene group tsv file without header, columns are gene, chr, pos, ref, alt, weight. For example,
+  * gene group tsv file without header `gene_group.tsv`, columns are gene, chr, pos, ref, alt, weight. For example,
 ```
 GOLGA6L22	15	22460882	G	T	1
 GOLGA6L22	15	22462401	G	C	1
@@ -127,7 +127,7 @@ sample_006	1	71	F	-0.131	-0.044
   
 * **Step 1**: Split VCF by Ancestry
 ```
-Rscript step1_vcf_split_by_ancestry.R \
+Rscript /path/to/step1_vcf_split_by_ancestry.R \
   --bed /path/to/plink/bed \
   --bim /path/to/plink/bim \
   --fam /path/to/plink/fam \
@@ -140,20 +140,21 @@ Rscript step1_vcf_split_by_ancestry.R \
   * use the `african_gds`, `european_gds` generated from **Step1**
   * `respnose_type` could be one of *continous*, *binary*, or *count*
 ```
-Rscript step2_association_detection.R \
+Rscript /path/to/step2_association_detection.R \
   --african_gds /path/to/gds \
   --european_gds /path/to/gds \
   --data_file /path/to/data/file \
+  --gene_group_file /path/to/gene_group_file
   --response_type type \
-  --kinship_rds /paht/to/kinship/rds \
+  --kinship_rds /path/to/kinship/rds \
   --out_file /path/to/rds/file
 ```
 
 * **Step 3**: Get the Weights for Ancestry
   * use the `pt_matrix_chr*.tsv` from **Step1**
 ```
-Rscript step3_weight_finding.R \
+Rscript /path/to/step3_weight_finding.R \
   --pt /path/to/cache/pt_matrix_chr*.tsv \
-  --gene_group /path/to/gene_group/file \
+  --gene_group /path/to/gene_group.tsv \
   --out_file /path/to/tsv/file
 ```

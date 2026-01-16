@@ -19,6 +19,12 @@ option_list <- list(
     metavar = "file"
   ),
   make_option(
+    c("--gene_group_file"),
+    type = "character",
+    help = "Path to gene group file",
+    metavar = "file"
+  ),
+  make_option(
     c("--response_type"),
     type = "character",
     default = "continuous",
@@ -44,6 +50,7 @@ opt <- parse_args(OptionParser(option_list = option_list))
 afr_gds <- opt$african_gds
 eur_gds <- opt$european_gds
 data_file <- opt$data_file
+gene_group_file <- opt$gene_group_file
 kinship_rds <- opt$kinship_rds
 out_file <- opt$out_file
 
@@ -107,10 +114,6 @@ df_pheno <- df_pheno[row_idx, , drop = FALSE]
 col_to_subset <- match(ids_common, kin_ids)
 ## Convert kinship to plain matrix to avoid S4 serialization issues
 Kmat <- as.matrix(df_kinship[col_to_subset, col_to_subset, drop = FALSE])
-
-
-# create output directory if needed
-dir.create(out_path, recursive = TRUE, showWarnings = FALSE)
 
 name_res <- colnames(df_pheno)[2]
 name_covs <- colnames(df_pheno)[3:ncol(df_pheno)]
