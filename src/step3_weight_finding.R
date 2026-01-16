@@ -1,26 +1,23 @@
 library(optparse)
-library(data.table)
-library(dplyr)
-
 option_list <- list(
   make_option(
     c("-p", "--pt"),
     type = "character",
-    default = "/scratch/g/pauer/Yu/smmat/src/python_split/output/cache/pt_matrix_chr15.tsv",
+    default = "./cache/pt_matrix_chr15.tsv",
     help = "Path to PT matrix TSV file [default %default]",
     metavar = "file"
   ),
   make_option(
     c("-g", "--gene"),
     type = "character",
-    default = "/scratch/g/pauer/Yu/smmat/cache/gene_group.tsv",
+    default = "gene_group.tsv",
     help = "Path to gene group TSV file [default %default]",
     metavar = "file"
   ),
   make_option(
-    c("-o", "--out"),
+    c("-o", "--out_file"),
     type = "character",
-    default = "/scratch/g/pauer/Yu/smmat/src/simulation2/output2/weights_chr15.tsv",
+    default = "output.tsv",
     help = "Output TSV path [default %default]",
     metavar = "file"
   )
@@ -31,8 +28,10 @@ opt <- parse_args(opt_parser)
 
 pt_path <- opt$pt
 gene_group_path <- opt$gene
-out_path <- opt$out
+out_file <- opt$out_file
 
+library(data.table)
+library(dplyr)
 df_pt <- data.table::fread(
   pt_path,
   header = TRUE
@@ -49,13 +48,13 @@ df_gene_group <- setNames(
   c("gene", "chr", "pos", "ref", "alt", "weight")
 )
 
-df_gene_group %>%
-  group_by(gene) %>%
-  summarise(n = n()) %>%
-  pull(n) %>%
-  summary()
+# df_gene_group %>%
+#   group_by(gene) %>%
+#   summarise(n = n()) %>%
+#   pull(n) %>%
+#   summary()
 
-str(df_gene_group)
+# str(df_gene_group)
 
 genes_unique <- unique(df_gene_group$gene)
 
@@ -89,7 +88,7 @@ df_weight_final <- df_weight %>%
 
 write.table(
   df_weight_final,
-  file = out_path,
+  file = out_file,
   row.names = FALSE,
   col.names = TRUE,
   quote = FALSE,

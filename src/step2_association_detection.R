@@ -1,12 +1,4 @@
-library(data.table)
-library(dplyr)
-library(GMMAT)
 library(optparse)
-library(SeqArray)
-library(future)
-library(future.apply)
-library(MASS)
-
 option_list <- list(
   make_option(
     c("--african_gds"),
@@ -29,8 +21,8 @@ option_list <- list(
   make_option(
     c("--response_type"),
     type = "character",
-    default = c("continuous", "binary", "count"),
-    help = "Response type: [default %default]",
+    default = "continuous",
+    help = "Response type: continuous, binary, or count [default: %default]",
     metavar = "type"
   ),
   make_option(
@@ -40,10 +32,10 @@ option_list <- list(
     metavar = "file"
   ),
   make_option(
-    c("--out_path"),
+    c("--out_file"),
     type = "character",
-    help = "Output directory",
-    metavar = "dir"
+    help = "Output path to RDS file",
+    metavar = "file"
   )
 )
 
@@ -53,7 +45,15 @@ afr_gds <- opt$african_gds
 eur_gds <- opt$european_gds
 data_file <- opt$data_file
 kinship_rds <- opt$kinship_rds
-out_path <- opt$out_path
+out_file <- opt$out_file
+
+library(SeqArray)
+library(future)
+library(future.apply)
+library(MASS)
+library(data.table)
+library(dplyr)
+library(GMMAT)
 
 # basic validation
 if (
@@ -61,10 +61,10 @@ if (
     is.null(eur_gds) ||
     is.null(data_file) ||
     is.null(kinship_rds) ||
-    is.null(out_path)
+    is.null(out_file)
 ) {
   stop(
-    "All options --african_gds, --european_gds, --data_file, --kinship_rds and --out_path must be provided."
+    "All options --african_gds, --european_gds, --data_file, --kinship_rds and --out_file must be provided."
   )
 }
 
@@ -176,14 +176,5 @@ out_obs <- SMMAT(
 
 saveRDS(
   list(aa = out_aa, ee = out_ee, observed = out_obs),
-  file = file.path(
-    out_path,
-    paste0(
-      "/smmat_results_",
-      name_res,
-      "_",
-      Sys.Date(),
-      ".rds"
-    )
-  )
+  file = out_file
 )

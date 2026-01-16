@@ -95,12 +95,14 @@ Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ an
       * SeqArray
       * SeqVarTools
       * snpStats
+      * GMMAT
     * bcftools > 1.20
     * bgzip
     * tabix
 * **Input**: 
   * plink file that contains ancestry matrix
   * vcf file that contains variant matrix, <u>highly suggest do it by chrosomes for the sake of memory</u>.
+  * kinship matrix rds `kinship_rds` file, with column name as `id`.
   * gene group tsv file without header, columns are gene, chr, pos, ref, alt, weight. For example,
 ```
 GOLGA6L22	15	22460882	G	T	1
@@ -112,7 +114,7 @@ GOLGA6L22	15	22466304	A	G	1
 HERC2P2	15	22554572	G	A	1
 HERC2P2	15	22554572	G	A	1
 ```
-  * clinical covariate tsv file with header, columns are id, response, var1, var2, ...
+  * clinical covariate tsv(csv, rds) file `data_file` with header, columns are id, response, var1, var2, ...
 ```
 id	response	age	sex	PC1	PC2
 sample_001	1	63	M	-0.012	0.034
@@ -123,7 +125,7 @@ sample_005	0	39	M	0.212	0.003
 sample_006	1	71	F	-0.131	-0.044
 ```
   
-* **Step 1**: 
+* **Step 1**: Split VCF by Ancestry
 ```
 Rscript step1_vcf_split_by_ancestry \
   --bed /path/to/plink/bed \
@@ -134,9 +136,24 @@ Rscript step1_vcf_split_by_ancestry \
   --chr_id 15
 ```
 
-* **Step 2**
+* **Step 2**: Model the Association
+  * use the `african_gds`, `european_gds` generated from **Step1**
+  * `respnose_type` could be one of *continous*, *binary*, or *count*
 ```
 Rscript step2_association_detection.R \
+  --african_gds /path/to/gds \
+  --european_gds /path/to/gds \
+  --data_file /path/to/data/file \
+  --response_type type \
+  --kinship_rds /paht/to/kinship/rds \
+  --out_file /path/to/rds/file
+```
 
-
+* **Step 3**: Get the Weights for Ancestry
+  * use the `pt_matrix_chr*.tsv` from **Step1**
+```
+Rscript step3_weight_finding.R \
+  --pt /path/to/cache/pt_matrix_chr*.tsv \
+  --gene_group /path/to/gene_group/file \
+  --out_file /path/to/tsv/file
 ```
