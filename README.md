@@ -70,7 +70,8 @@ To obtain the $p_1$ and $p_2$, we use the following formulas.
 $p_1 = \frac{2*N_1 + N_2 + N_4}{2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8}$
 
 $p_2 = \frac{N_4 + 2*N_7 + N_8} {2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8}$.
-* Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ and $N_1..N_9 = 0$, then $p_1 = p_2 = 0.5$.
+
+Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ and $N_1..N_9 = 0$, then $p_1 = p_2 = 0.5$.
 
 
 ### Association Detection
@@ -111,6 +112,16 @@ GOLGA6L22	15	22466304	A	G	1
 HERC2P2	15	22554572	G	A	1
 HERC2P2	15	22554572	G	A	1
 ```
+  * clinical covariate tsv file with header, columns are id, response, var1, var2, ...
+```
+id	response	age	sex	PC1	PC2
+sample_001	1	63	M	-0.012	0.034
+sample_002	0	57	F	0.104	-0.021
+sample_003	0	45	M	-0.045	0.110
+sample_004	1	52	F	0.008	-0.076
+sample_005	0	39	M	0.212	0.003
+sample_006	1	71	F	-0.131	-0.044
+```
   
 * **Step 1**: 
 ```
@@ -125,5 +136,7 @@ Rscript step1_vcf_split_by_ancestry \
 
 * **Step 2**
 ```
+Rscript step2_association_detection.R \
+
 
 ```
