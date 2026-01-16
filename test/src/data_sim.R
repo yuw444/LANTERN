@@ -6,7 +6,7 @@ library(data.table)
 library(dplyr)
 library(GMMAT)
 
-gds <- seqOpen("/scratch/g/pauer/Yu/Tractor-RVA/test/output/aa_ds.gds")
+gds <- seqOpen("/scratch/g/pauer/Yu/Tractor-RVA/test/data/aa_ds.gds")
 gds_ids <- seqGetData(gds, "sample.id")
 seqClose(gds)
 
