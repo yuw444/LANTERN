@@ -20,6 +20,7 @@
 | chr2:5,000-6,000    | 03         | 03         | 02         |
 
 Explanation:
+- Track: Half-open [start, end) (end excluded)
 - Rows: contiguous genome tracks or windows used in analysis
 - Columns: individual subjects in the cohort.
 - Entries: ancestry-of-origin code for the track in that subject (03 = pure African, 02 = mixed, 01 = pure European).
