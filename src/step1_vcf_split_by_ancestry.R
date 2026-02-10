@@ -75,7 +75,7 @@ df_geno4 <- df_geno3 %>%
     separate(pos1, into = c("pos1", "pos2"), sep = "-") %>%
     mutate(
         pos1 = as.numeric(pos1),
-        pos2 = as.numeric(pos2)
+        pos2 = as.numeric(pos2) - 1
     )
 
 ### Perform the ancestry splitting for each chromosome
