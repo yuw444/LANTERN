@@ -458,11 +458,20 @@ system(
     paste0("tabix -s 1 -b 2 -e 2 ", aa_ds_file, ".gz")
 )
 
+writeLines(
+    c(
+        "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Dosage of the alternate allele\">"
+    ),
+    paste0(out_path, "/cache/header.txt")
+)
+
 system(paste0(
     "bcftools annotate -a ",
     out_path,
     "/cache/aa_ds.tsv.gz -c CHROM,POS,FORMAT/DS ",
-    "-h /scratch/g/pauer/Yu/smmat/rawdata/DS/header.txt ",
+    "-h ",
+    out_path,
+    "/cache/header.txt ",
     out_path,
     "/cache/subset.vcf > ",
     out_path,
@@ -473,7 +482,9 @@ system(paste0(
     "bcftools annotate -a ",
     out_path,
     "/cache/ee_ds.tsv.gz -c CHROM,POS,FORMAT/DS ",
-    "-h /scratch/g/pauer/Yu/smmat/rawdata/DS/header.txt ",
+    "-h ",
+    out_path,
+    "/cache/header.txt ",
     out_path,
     "/cache/subset.vcf > ",
     out_path,
