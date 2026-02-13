@@ -2,7 +2,7 @@
 
 ## 1. Background
 
-* Homo siapen(diploid), the genome regions on homogolous pair of chromsomes could originate from different ancestries. 
+* Homo sapiens(diploid), the genome regions on homogolous pair of chromsomes could originate from different ancestries. 
 * We currently focus on two ancestries, **african(AFR)** and **european(EUR)**.
 * Similarly, two alleles of each variant could come from **pure african(03)**, **mixed ancestry(02)**, and **pure european(01)** in each subject.
 * The B allele count could be **1/1**, **0/1**, **1/0**, and **0/0**, as the phase information is unkown.
@@ -142,7 +142,7 @@ Rscript /path/to/step1_vcf_split_by_ancestry.R \
 
 * **Step 2**: Model the Association
   * use the `african_gds`, `european_gds` generated from **Step1**
-  * `respnose_type` could be one of *continous*, *binary*, or *count*
+  * `response_type` could be one of *continous*, *binary*, or *count*
 ```
 Rscript /path/to/step2_association_detection.R \
   --african_gds /path/to/gds \
@@ -160,5 +160,6 @@ Rscript /path/to/step2_association_detection.R \
 Rscript /path/to/step3_weight_finding.R \
   --pt /path/to/cache/pt_matrix_chr*.tsv \
   --gene_group /path/to/gene_group.tsv \
-  --out_file /path/to/tsv/file
+  --out_file /path/to/tsv/file \
+  --chr_id 15
 ```
