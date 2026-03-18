@@ -1,3 +1,5 @@
 .vscode/
 test/output/
 test/*.out
+*.gz
+*.tbi
