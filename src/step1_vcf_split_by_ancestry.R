@@ -354,7 +354,7 @@ nrow_rm_ids <- as.numeric(strsplit(
     " "
 )[[1]][1])
 
-if (nrow_pos == 1 && nrow_rm_ids == length(sample_id_vcf)) {
+if (nrow_pos == 0 && nrow_rm_ids == length(sample_id_vcf)) {
     system(paste0(
         "cp ",
         vcf_path, ## subset the sample
@@ -366,7 +366,7 @@ if (nrow_pos == 1 && nrow_rm_ids == length(sample_id_vcf)) {
     system(paste0(
         "bcftools view ",
         ifelse(
-            nrow_pos > 1,
+            nrow_pos > 0,
             paste0("-T ^", out_path, "/cache/pos_to_rm.txt "),
             " "
         ), ## remove the variants
