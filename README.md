@@ -50,10 +50,10 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 
 ### Association Detection
 
-* Pure African association: $\mathbf x_{AFR,AFR} \sim \text{Response} \to p_{a}$
-* Pure European association: $\mathbf x_{EUR,EUR} \sim \text{Response} \to p_{e}$
-* Observation association: $\mathbf x_{obs} \sim \text{Response} \to p_{obs}$
-* Cauchy-Weighted combination between $p_a$ and $p_e$, result $p_c$.
+* For testing association with rare alleles on AFR haplotypes we obtain p-value: $\mathbf p_{a}$
+* For testing association with rare alleles on EUR haplotypes we obtain p-value: $\mathbf p_{e}$
+* For testing association with rare alleles ignoring ancestry we obtain p-value: Observation association: $\mathbf p_{obs}$
+* The Cauchy-weighted combination between $p_a$ and $p_e$, results in $p_c$.
 
 
 ### 4. Pipeline
