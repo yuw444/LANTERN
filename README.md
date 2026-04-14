@@ -53,7 +53,7 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 * For testing association with rare alleles on AFR haplotypes we obtain p-value: $\mathbf p_{a}$
 * For testing association with rare alleles on EUR haplotypes we obtain p-value: $\mathbf p_{e}$
 * For testing association with rare alleles ignoring ancestry we obtain p-value: Observation association: $\mathbf p_{obs}$
-* The Cauchy-weighted combination between $p_a$ and $p_e$, results in $p_c$.
+* The Cauchy-weighted combination between $p_a$ and $p_e$ results in $p_c$
 
 
 ### 4. Pipeline
@@ -77,8 +77,8 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
   * No installation is needed, just copy the `./src` to your local machine
 
 * **Input**: 
-  * plink file that contains ancestry matrix
-  * vcf file that contains variant matrix, <u>highly suggest do it by chrosomes for the sake of memory</u>.
+  * plink file that contains inferred local ancestry matrix
+  * vcf file that contains variant matrix, <u>we highly suggest doing  this by chrosomes</u>.
   * kinship matrix rds `kinship_rds` file, with column name as `id`.
   * gene group tsv file without header `gene_group.tsv`, columns are gene, chr, pos, ref, alt, weight. For example,
 ```
@@ -91,7 +91,7 @@ GOLGA6L22	15	22466304	A	G	1
 HERC2P2	15	22554572	G	A	1
 HERC2P2	15	22554572	G	A	1
 ```
-  * clinical covariate tsv(csv, rds) file `data_file` with header, columns are id, response, var1, var2, ...
+  * covariate tsv(csv, rds) file `data_file` with header, columns are id, response, var1, var2, ...
 ```
 id	response	age	sex	PC1	PC2
 sample_001	1	63	M	-0.012	0.034
