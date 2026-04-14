@@ -1,4 +1,4 @@
-# Tractor Rare Variant Analysis
+# LANTERN
 
 ## 1. Background
 
