@@ -22,9 +22,7 @@ Explanation:
 - Track: Half-open [start, end) (end excluded)
 - Rows: contiguous genome tracks or windows used in analysis
 - Columns: individual subjects in the cohort.
-- Entries: ancestry-of-origin code for the track in that subject (03 = pure African, 02 = mixed, 01 = pure European).
-- Interpretation example: for chr1:1,000-2,000, Subject_S1 has African-origin ancestry (03), Subject_S3 has European-origin (01), and Subject_S2 has mixed ancestry (02). This matrix is used to assign ancestry-specific allele effects or to filter variants by ancestry background.
-
+- Entries: Inferred ancestry (03 = 2 AFR chromosomes, 02 = 1 AFR and 1 EUR chromosome , 01 = 2 EUR chromosomes).
 
 ### Variant Matrix
 
@@ -48,30 +46,6 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 | chr1:1,234 A>G              | 0/1:01             | 1/1:02             | 0/0:02             |
 | chr1:2,345 T>C              | 1/0:03             | 0/1:03             | 0/0:03             |
 | chr2:5,678 G>A              | 0/0:02             | 0/1:01             | 1/1:01             |
-
-## 3. Method
-
-### Ancestry Specific Variant Matrix Split
-
-| Ancestry            | Genotype               | Frequency | Condition              | $\mathbf x_{AFR,AFR}$ | $\mathbf x_{EUR,EUR}$ |
-|---------------------|------------------------|-----------|------------------------|:-----------------:|:-----------------:|
-| **AFR,AFR (03)**    | 1/1 (2)                | $N_1$     | (pt = 3 & gt = 2)      | 2                | 0                |
-|                     | 1/0 (1), 0/1 (1)       | $N_2$     | (pt = 3 & gt = 1)      | 1                | 0                |
-|                     | 0/0 (0)                | $N_3$     | (pt = 3 & gt = 0)      | 0                | 0                |
-| **AFR,EUR (02)**    | 1/1 (2)                | $N_4$     | (pt = 2 & gt = 2)      | 1                | 1                |
-|                     | 1/0 (1), 0/1 (1)       | $N_5$     | (pt = 2 & gt = 1)      | $p_1$            | $p_2$            |
-|                     | 0/0 (0)                | $N_6$     | (pt = 2 & gt = 0)      | 0                | 0                |
-| **EUR,EUR (01)**    | 1/1 (2)                | $N_7$     | (pt = 1 & gt = 2)      | 0                | 2                |
-|                     | 1/0 (1), 0/1 (1)       | $N_8$     | (pt = 1 & gt = 1)      | 0                | 1                |
-|                     | 0/0 (0)                | $N_9$     | (pt = 1 & gt = 0)      | 0                | 0                |
-
-To obtain the $p_1$ and $p_2$, we use the following formulas. 
-
-$p_1 = \frac{2*N_1 + N_2 + N_4}{2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8}$
-
-$p_2 = \frac{N_4 + 2*N_7 + N_8} {2*N_1 + N_2 + 2*N_4 + 2*N_7 + N_8}$.
-
-Special case: When singleton SNP has an ancestry of AFR,EUR, i.e. , $N_5 = 1$ and $N_1..N_9 = 0$, then $p_1 = p_2 = 0.5$.
 
 
 ### Association Detection
