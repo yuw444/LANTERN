@@ -1,12 +1,11 @@
-# LANTERN
+# LANTERN (Leveraging local ANcestry Tracts to Enhance Rare variaNt aggregate associations)
 
 ## 1. Background
 
-* Homo sapiens(diploid), the genome regions on homogolous pair of chromsomes could originate from different ancestries. 
-* We currently focus on two ancestries, **african(AFR)** and **european(EUR)**.
-* Similarly, two alleles of each variant could come from **pure african(03)**, **mixed ancestry(02)**, and **pure european(01)** in each subject.
-* The B allele count could be **1/1**, **0/1**, **1/0**, and **0/0**, as the phase information is unkown.
-* We assume that the effect of allele could be ancestry specific(**pure african**, **pure european**) or not(**mixed ancestry**).
+* LANTERN is a method for conducting aggregate rare-variant association tests using inferred local ancestry as additional information. 
+* For simplicity, in the following we demonstrate LANTERN on two ancestries, **african(AFR)** and **european(EUR)**.
+* LANTERN can be implemented on up to 5 ancestries. 
+
 
 
 ## 2. Data
