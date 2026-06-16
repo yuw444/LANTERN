@@ -3,3 +3,7 @@ test/output/
 test/*.out
 *.gz
 *.tbi
+raw
+# pixi environments
+.pixi/*
+!.pixi/config.toml
