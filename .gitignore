@@ -6,4 +6,8 @@ raw
 =======
 *.gz
 *.tbi
+<<<<<<< HEAD
 >>>>>>> 1207355f0566e6e3b0b47f883d14e07a700ca9f3
+=======
+>>>>>>> parent of dddeba1 (redo)
+.omo
