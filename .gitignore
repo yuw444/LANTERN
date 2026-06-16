@@ -1,4 +1,9 @@
 .vscode/
 test/output/
 test/*.out
+<<<<<<< HEAD
 raw
+=======
+*.gz
+*.tbi
+>>>>>>> 1207355f0566e6e3b0b47f883d14e07a700ca9f3
