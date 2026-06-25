@@ -21,13 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # R 4.4 pairs with Bioconductor 3.19, which has SeqArray/SeqVarTools
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: '4.4'
           use-public-rspm: true
 
-      # System libraries needed to compile the C extension and R packages
       - name: Install system dependencies
         run: |
           sudo apt-get update -qq
@@ -35,34 +33,22 @@ jobs:
             libcurl4-openssl-dev libssl-dev libxml2-dev \
             libhdf5-dev libbz2-dev liblzma-dev
 
-      # Install Bioconductor packages before setup-r-dependencies so they are
-      # available when that action resolves DESCRIPTION Imports
-      - name: Install Bioconductor packages
-        run: |
-          Rscript -e '
-            install.packages("BiocManager", quiet = TRUE)
-            BiocManager::install(
-              c("SeqArray", "SeqVarTools"),
-              version = "3.19",
-              ask     = FALSE,
-              update  = FALSE,
-              quiet   = TRUE
-            )
-          '
-
-      # Install all remaining DESCRIPTION Imports + Suggests (knitr, rmarkdown,
-      # testthat, data.table, …).  GMMAT is in Suggests but eval=FALSE in
-      # vignettes so it is not needed for the check to pass.
+      # Install all DESCRIPTION deps + Bioc packages.
+      # bioc:: prefix tells setup-r-dependencies to use BiocManager;
+      # it auto-selects the Bioc version that matches the installed R.
+      # GMMAT is in Suggests but all its chunks are eval=FALSE, so it is
+      # not required for the check to pass.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: lantern
           extra-packages: |
+            bioc::SeqArray
+            bioc::SeqVarTools
             any::knitr
             any::rmarkdown
 
-      # Build and check the package, including vignettes.
-      # --no-manual avoids a LaTeX requirement.
-      # error-on: '"error"' lets warnings through but fails on errors.
+      # --no-manual skips PDF manual (no LaTeX needed).
+      # error-on: '"error"' passes warnings but fails on errors.
       - uses: r-lib/actions/check-r-package@v2
         with:
           working-directory: lantern
