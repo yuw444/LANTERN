@@ -16,4 +16,8 @@ simulation/
 lantern/src/*.o
 lantern/src/*.so
 lantern/src/*.dll
-lantern/*
+lantern/docs/*
+lantern.Rcheck/
+lantern.Rcmdcheck/
+.omo/*
+AGENTS.md
