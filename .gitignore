@@ -16,3 +16,4 @@ simulation/
 lantern/src/*.o
 lantern/src/*.so
 lantern/src/*.dll
+lantern/*

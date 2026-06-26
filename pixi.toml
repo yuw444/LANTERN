@@ -33,6 +33,7 @@ samtools = ">=1.23.1,<2"
 gcc = ">=14"
 gxx = ">=14"
 r-compquadform = ">=1.4.4,<2"
+gh = ">=2.95.0,<3"
 
 [tasks]
 install-lantern = "R_MAKEVARS_USER=$PWD/R.Makevars.local R CMD INSTALL lantern/"
