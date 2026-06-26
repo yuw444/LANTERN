@@ -142,8 +142,8 @@ seqVCF2GDS(vcf_eur, gds_eur, verbose = FALSE)
 
 cat("GDS files created:\n", gds_afr, "\n", gds_eur, "\n")
 #> GDS files created:
-#>  /tmp/Rtmp6RgU9d/file4de45b03bd97.gds 
-#>  /tmp/Rtmp6RgU9d/file4de454830a1f.gds
+#>  /tmp/RtmpswOmMF/file1cce6105e6b6.gds 
+#>  /tmp/RtmpswOmMF/file1cce46e27a28.gds
 ```
 
 ------------------------------------------------------------------------
