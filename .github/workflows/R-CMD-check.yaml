@@ -32,7 +32,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             libcurl4-openssl-dev libssl-dev libxml2-dev \
-            libhdf5-dev libbz2-dev liblzma-dev
+            libhdf5-dev libbz2-dev liblzma-dev bcftools
 
       # Install all DESCRIPTION deps + Bioc packages.
       # bioc:: prefix tells setup-r-dependencies to use BiocManager;
