@@ -46,6 +46,7 @@ jobs:
             bioc::SeqVarTools
             any::knitr
             any::rmarkdown
+            any::rcmdcheck
 
       # --no-manual skips PDF manual (no LaTeX needed).
       # error-on: '"error"' passes warnings but fails on errors.

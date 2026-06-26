@@ -47,6 +47,9 @@ jobs:
             any::knitr
             any::rmarkdown
 
+      - name: Install lantern package
+        run: R CMD INSTALL lantern/
+
       - name: Build pkgdown site
         run: |
           cd lantern
