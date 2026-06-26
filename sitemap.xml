@@ -1,0 +1,24 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://yuw444.github.io/LANTERN/404.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/AGENTS.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/LICENSE-text.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/articles/gene-level-test.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/articles/index.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/articles/vcf-splitting.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/authors.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/index.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/calc_gene_ancestry_weights.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/count_ancestry_codes.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/create_ancestry_vcfs.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_msp.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_phased_gt_matrix.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/index.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/lantern-package.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/run_ancestry_pipeline.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/run_phased_pipeline.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/split_by_ancestry.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/split_phased.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/subset_vcf_by_range.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/write_vcf_with_ancestry.html</loc></url>
+</urlset>
+
