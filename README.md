@@ -47,7 +47,6 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 | chr1:2,345 T>C              | 1/0:03             | 0/1:03             | 0/0:03             |
 | chr2:5,678 G>A              | 0/0:02             | 0/1:01             | 1/1:01             |
 
-<<<<<<< HEAD
 ## 3. Method
 
 ### Ancestry Specific Variant Matrix Split
@@ -159,15 +158,6 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 * Cauchy combination of per-ancestry p-values $\to p_c$
 
 For the 2-ancestry case: pure African $\to p_a$, pure European $\to p_e$, Cauchy combination $\to p_c$.
-=======
-
-### Association Detection
-
-* For testing association with rare alleles on AFR haplotypes we obtain p-value: $\mathbf p_{a}$
-* For testing association with rare alleles on EUR haplotypes we obtain p-value: $\mathbf p_{e}$
-* For testing association with rare alleles ignoring ancestry we obtain p-value: Observation association: $\mathbf p_{obs}$
-* The Cauchy-weighted combination between $p_a$ and $p_e$ results in $p_c$
->>>>>>> origin/main
 
 
 ### 4. Pipeline
