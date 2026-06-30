@@ -1,0 +1,66 @@
+url: https://yuw444.github.io/LANTERN/
+
+template:
+  bootstrap: 5
+  bootswatch: cosmo
+
+home:
+  title: "LANTERN"
+  description: >
+    Ancestry-specific rare variant burden testing for admixed populations.
+    Splits genotype dosages by local ancestry (phased or unphased) and runs
+    ancestry-stratified SMMAT gene-level tests via GMMAT.
+
+navbar:
+  structure:
+    left:  [intro, articles, reference]
+    right: [github]
+  components:
+    github:
+      icon: "fab fa-github fa-lg"
+      aria-label: "GitHub"
+      href: https://github.com/yuw444/LANTERN
+
+articles:
+  - title: "Workflows"
+    navbar: "Workflows"
+    contents:
+      - vcf-splitting
+      - multi-ancestry-splitting
+      - gene-level-test
+
+reference:
+  - title: "Unphased splitting"
+    desc: >
+      Functions for diploid genotype matrices where ancestry is summarised
+      as a per-variant diploid code.
+    contents:
+      - split_by_ancestry
+      - split_by_ancestry_multi
+      - run_ancestry_pipeline
+      - count_ancestry_codes
+
+  - title: "Phased splitting"
+    desc: >
+      Functions for phased data where per-haplotype local ancestry is
+      available (e.g. from RFMix).  Splitting is deterministic.
+    contents:
+      - split_phased
+      - split_phased_multi
+      - run_phased_pipeline
+
+  - title: "VCF utilities"
+    desc: Write and subset ancestry-specific VCF files.
+    contents:
+      - write_vcf_with_ancestry
+      - create_ancestry_vcfs
+      - subset_vcf_by_range
+
+  - title: "Downstream helpers"
+    desc: Helpers for preparing inputs to SMMAT gene-level tests.
+    contents:
+      - calc_gene_ancestry_weights
+
+  - title: "Package"
+    contents:
+      - lantern-package

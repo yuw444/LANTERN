@@ -21,8 +21,6 @@
 #'   Values: 1=EUR/EUR, 2=AFR/EUR (mixed), 3=AFR/AFR
 #'   rownames: sample IDs (must match colnames of gt_matrix)
 #'   colnames: region IDs (e.g., "chr:start-end")
-#' @param vcf_path Input VCF path (optional, for coordinate-based variant matching)
-#' @param out_prefix Output file prefix for VCFs (optional)
 #' @param verbose Print progress messages (default TRUE)
 #'
 #' @return List with elements:
@@ -46,10 +44,7 @@
 #' # Only chr1:100 and chr1:200 that overlap regions are kept
 #'
 #' @export
-run_ancestry_pipeline <- function(gt_matrix, pt_matrix,
-                                  vcf_path = NULL,
-                                  out_prefix = NULL,
-                                  verbose = TRUE) {
+run_ancestry_pipeline <- function(gt_matrix, pt_matrix, verbose = TRUE) {
 
   if (verbose) message("=== LANTERN Ancestry Pipeline ===\n")
 
@@ -126,7 +121,7 @@ run_ancestry_pipeline <- function(gt_matrix, pt_matrix,
               n_pt, " cols). Using first ", min_n, " variants.")
     }
     gt_var_names <- paste0("var_", 1:min_n)
-    pt_region_names <- paste0("region_", 1:min_n)
+    pt_region_names <- paste0("var_", 1:min_n)
     rownames(gt_matrix) <- gt_var_names
     colnames(pt_matrix) <- pt_region_names
   }
@@ -269,10 +264,10 @@ run_ancestry_pipeline <- function(gt_matrix, pt_matrix,
   if (n_monomorphic > 0) {
     if (verbose) message("  Removed ", n_monomorphic, " monomorphic variants (no alt alleles)")
 
+    dropped_variants <- c(dropped_variants, rownames(gt_subset)[!variant_has_alt])
+
     gt_subset <- gt_subset[variant_has_alt, , drop = FALSE]
     pt_subset <- pt_subset[, variant_has_alt, drop = FALSE]
-
-    dropped_variants <- c(dropped_variants, rownames(gt_subset)[!variant_has_alt])
   }
 
   if (nrow(gt_subset) == 0) {
@@ -285,6 +280,9 @@ run_ancestry_pipeline <- function(gt_matrix, pt_matrix,
   if (verbose) message("\nStep 4: Splitting genotypes by ancestry...")
 
   result <- split_by_ancestry(gt_subset, pt_subset)
+
+  # Capture post-filter variant count BEFORE removing gt_subset
+  n_variants_kept_final <- nrow(gt_subset)
 
   # Clean up gt_subset after C call (keep pt_subset for counts - it's small)
   rm(gt_subset)
@@ -312,24 +310,6 @@ run_ancestry_pipeline <- function(gt_matrix, pt_matrix,
     message("  -> Mixed (2): median = ", median(counts$mixed))
   }
 
-  # ========================================================================
-  # Step 7: Write VCFs if requested
-  # ========================================================================
-  if (!is.null(vcf_path) && !is.null(out_prefix)) {
-    if (verbose) message("\nStep 6: Writing ancestry-specific VCFs...")
-
-    .write_vcf_with_ancestry(
-      vcf_path, result$african, result$european, pt_subset,
-      paste0(out_prefix, "_african.vcf"),
-      paste0(out_prefix, "_european.vcf")
-    )
-
-    if (verbose) {
-      message("  -> African: ", out_prefix, "_african.vcf")
-      message("  -> European: ", out_prefix, "_european.vcf")
-    }
-  }
-
   if (verbose) message("\n=== Pipeline Complete ===\n")
 
   invisible(list(
@@ -340,7 +320,7 @@ run_ancestry_pipeline <- function(gt_matrix, pt_matrix,
       n_samples_total = n_gt_samples_orig + n_pt_samples_orig - n_common_samples,
       n_samples_kept = n_common_samples,
       n_variants_total = n_gt_variants_orig,
-      n_variants_kept = nrow(gt_subset),
+      n_variants_kept = n_variants_kept_final,
       n_monomorphic_filtered = n_monomorphic,
       dropped_samples = unique(dropped_samples),
       dropped_variants = unique(dropped_variants)

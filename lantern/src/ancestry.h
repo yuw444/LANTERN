@@ -10,17 +10,28 @@ SEXP count_ancestry_codes(SEXP mat, SEXP code);
 /* Split genotype matrix by ancestry */
 SEXP split_by_ancestry(SEXP gt_genotype, SEXP ancestry);
 
-/* Read RFMix/PLINK ancestry file (.bed/.bim/.fam) */
-SEXP read_ancestry_plink(SEXP bed_path, SEXP bim_path, SEXP fam_path);
-
-/* Read PT matrix from TSV file */
-SEXP read_pt_matrix(SEXP path);
+/* Read PLINK .bed/.bim/.fam ancestry file */
+SEXP read_bed_file(SEXP bed_path, SEXP bim_path, SEXP fam_path, SEXP sample_indices);
 
 /* Write ancestry-specific VCFs */
-SEXP write_ancestry_vcf(SEXP vcf_path, SEXP gt_matrix, SEXP ancestry_matrix,
-                         SEXP out_african, SEXP out_european);
+SEXP write_vcf_with_ancestry(SEXP vcf_path, SEXP gt_matrix, SEXP ancestry_matrix,
+                              SEXP output_african, SEXP output_european);
 
 /* Subset VCF by genomic range */
 SEXP subset_vcf_by_range(SEXP vcf_path, SEXP chrom, SEXP start, SEXP end, SEXP output_path);
+
+/* Split phased haplotypes by per-haplotype local ancestry (2-population) */
+SEXP split_phased_by_ancestry(SEXP gt_hap0, SEXP gt_hap1,
+                               SEXP anc_hap0, SEXP anc_hap1,
+                               SEXP pop_codes);
+
+/* Split phased haplotypes into K population-specific dosage matrices */
+SEXP split_phased_multi(SEXP gt_hap0, SEXP gt_hap1,
+                         SEXP anc_hap0, SEXP anc_hap1,
+                         SEXP pop_codes);
+
+/* Split unphased genotype matrix into K population-specific dosage matrices */
+SEXP split_by_ancestry_multi(SEXP gt, SEXP ancestry, SEXP pure_codes,
+                               SEXP m_code, SEXP m_pop1, SEXP m_pop2);
 
 #endif

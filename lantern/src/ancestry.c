@@ -172,7 +172,10 @@ static SEXP read_bed_file_c(SEXP bed_path, SEXP bim_path, SEXP fam_path, SEXP sa
     if (!fp) error("Cannot open bed file: %s", bed);
     
     unsigned char magic[3];
-    fread(magic, 1, 3, fp);
+    if (fread(magic, 1, 3, fp) != 3) {
+        fclose(fp);
+        error("Cannot read bed file header");
+    }
     if (magic[0] != 0x6c || magic[1] != 0x1b || magic[2] != 0x01) {
         fclose(fp);
         error("Invalid bed file format");
@@ -202,7 +205,10 @@ static SEXP read_bed_file_c(SEXP bed_path, SEXP bim_path, SEXP fam_path, SEXP sa
     
     for (int v = 0; v < n_variants; v++) {
         unsigned char buffer[store_size];
-        fread(buffer, 1, store_size, fp);
+        if (fread(buffer, 1, store_size, fp) != (size_t)store_size) {
+            fclose(fp);
+            error("Truncated bed file at variant %d", v);
+        }
         
         for (int s = 0; s < n_samples; s++) {
             int byte_idx = s / 4;
@@ -279,35 +285,35 @@ static SEXP write_vcf_with_ancestry_c(SEXP vcf_path, SEXP gt_matrix, SEXP ancest
             double ds_afr, ds_eur;
             
             if (an == 3) {
-                sprintf(gt_afr, "%d/%d", gt > 0 ? 1 : 0, gt > 1 ? 1 : 0);
-                sprintf(gt_eur, "0/0");
+                snprintf(gt_afr, 20, "%d/%d", gt > 0 ? 1 : 0, gt > 1 ? 1 : 0);
+                snprintf(gt_eur, 20, "0/0");
                 ds_afr = gt > 0 ? (gt > 1 ? 2.0 : 1.0) : 0.0;
                 ds_eur = 0.0;
             } else if (an == 1) {
-                sprintf(gt_afr, "0/0");
-                sprintf(gt_eur, "%d/%d", gt > 0 ? 1 : 0, gt > 1 ? 1 : 0);
+                snprintf(gt_afr, 20, "0/0");
+                snprintf(gt_eur, 20, "%d/%d", gt > 0 ? 1 : 0, gt > 1 ? 1 : 0);
                 ds_afr = 0.0;
                 ds_eur = gt > 0 ? (gt > 1 ? 2.0 : 1.0) : 0.0;
             } else if (an == 2) {
                 if (gt == 2) {
-                    sprintf(gt_afr, "1/0");
-                    sprintf(gt_eur, "0/1");
+                    snprintf(gt_afr, 20, "1/0");
+                    snprintf(gt_eur, 20, "0/1");
                     ds_afr = 1.0;
                     ds_eur = 1.0;
                 } else if (gt == 1) {
-                    sprintf(gt_afr, "0/1");
-                    sprintf(gt_eur, "0/1");
+                    snprintf(gt_afr, 20, "0/1");
+                    snprintf(gt_eur, 20, "0/1");
                     ds_afr = 0.5;
                     ds_eur = 0.5;
                 } else {
-                    sprintf(gt_afr, "0/0");
-                    sprintf(gt_eur, "0/0");
+                    snprintf(gt_afr, 20, "0/0");
+                    snprintf(gt_eur, 20, "0/0");
                     ds_afr = 0.0;
                     ds_eur = 0.0;
                 }
             } else {
-                sprintf(gt_afr, "0/0");
-                sprintf(gt_eur, "0/0");
+                snprintf(gt_afr, 20, "0/0");
+                snprintf(gt_eur, 20, "0/0");
                 ds_afr = 0.0;
                 ds_eur = 0.0;
             }
@@ -379,6 +385,288 @@ static SEXP subset_vcf_by_range_c(SEXP vcf_path, SEXP chrom, SEXP start, SEXP en
 }
 
 // ============================================================================
+// split_by_ancestry_multi: K-population unphased dosage splitting
+// ============================================================================
+//
+// Algorithm (per variant row):
+//   Step 1 — estimate population proportions p[k] from unambiguous observations:
+//     * pure pop k, gt=2 → num[k] += 2, D += 2
+//     * pure pop k, gt=1 → num[k] += 1, D += 1
+//     * mixed pair (a,b), gt=2 → num[a] += 1, num[b] += 1, D += 2
+//     * mixed pair (a,b), gt=1 → excluded (ambiguous)
+//     p[k] = num[k] / D    (if D==0, all p[k]=0; handled per-pair below)
+//
+//   Step 2 — assign dosages:
+//     * pure pop k, gt=g  → out[k] = g
+//     * mixed (a,b), gt=2 → out[a] = 1, out[b] = 1
+//     * mixed (a,b), gt=1 → out[a] = p[a]/(p[a]+p[b]), out[b] = p[b]/(p[a]+p[b])
+//                           (singleton fallback: 0.5/0.5 when p[a]+p[b]==0)
+//     * unknown code or gt=0 → 0
+//
+// Arguments:
+//   gt          int matrix nrow×ncol, values 0/1/2
+//   ancestry    int matrix nrow×ncol, same dims
+//   pure_codes  int vector length K: pure-ancestry code for each population
+//   m_code      int vector length M: mixed-ancestry codes
+//   m_pop1      int vector length M: 0-based index of parent pop 1 in pure_codes
+//   m_pop2      int vector length M: 0-based index of parent pop 2 in pure_codes
+static SEXP split_by_ancestry_multi_c(SEXP gt, SEXP ancestry,
+                                        SEXP pure_codes,
+                                        SEXP m_code, SEXP m_pop1, SEXP m_pop2) {
+    int K = length(pure_codes);
+    int M = length(m_code);
+    int *pure = INTEGER(pure_codes);
+    int *mc   = INTEGER(m_code);
+    int *mp1  = INTEGER(m_pop1);
+    int *mp2  = INTEGER(m_pop2);
+
+    SEXP dim  = PROTECT(getAttrib(gt, R_DimSymbol));
+    int nrow  = INTEGER(dim)[0];   /* variants */
+    int ncol  = INTEGER(dim)[1];   /* samples  */
+    int n     = nrow * ncol;
+
+    SEXP gt_i  = PROTECT(coerceVector(gt,       INTSXP));
+    SEXP anc_i = PROTECT(coerceVector(ancestry, INTSXP));
+    int *gp    = INTEGER(gt_i);
+    int *ap    = INTEGER(anc_i);
+
+    /* Allocate K output matrices */
+    SEXP result = PROTECT(allocVector(VECSXP, K));
+    for (int p = 0; p < K; p++) {
+        SEXP mat = PROTECT(allocMatrix(REALSXP, nrow, ncol));
+        memset(REAL(mat), 0, n * sizeof(double));
+        SET_VECTOR_ELT(result, p, mat);
+        UNPROTECT(1);   /* protected via result */
+    }
+    double **out = (double **) R_alloc(K, sizeof(double *));
+    for (int p = 0; p < K; p++)
+        out[p] = REAL(VECTOR_ELT(result, p));
+
+    /* Per-variant working buffers (freed automatically by R_alloc) */
+    double *num = (double *) R_alloc(K, sizeof(double));
+    double *pk  = (double *) R_alloc(K, sizeof(double));
+
+    for (int i = 0; i < nrow; i++) {
+
+        /* -- Step 1: accumulate unambiguous alt allele counts -- */
+        double D = 0.0;
+        memset(num, 0, K * sizeof(double));
+
+        for (int j = 0; j < ncol; j++) {
+            int g = gp[i + nrow * j];
+            int a = ap[i + nrow * j];
+            if (g == 0) continue;
+
+            /* pure ancestry */
+            int hit = 0;
+            for (int p = 0; p < K; p++) {
+                if (a == pure[p]) {
+                    num[p] += g;  D += g;
+                    hit = 1;  break;
+                }
+            }
+            if (hit) continue;
+
+            /* mixed ancestry — only hom-alts inform p[k] */
+            if (g == 2) {
+                for (int m = 0; m < M; m++) {
+                    if (a == mc[m]) {
+                        num[mp1[m]] += 1.0;
+                        num[mp2[m]] += 1.0;
+                        D           += 2.0;
+                        break;
+                    }
+                }
+            }
+            /* mixed gt==1: ambiguous, excluded from Step 1 */
+        }
+
+        /* -- Compute p[k] -- */
+        if (D > 0.0)
+            for (int p = 0; p < K; p++) pk[p] = num[p] / D;
+        else
+            memset(pk, 0, K * sizeof(double));  /* singleton case handled per-pair */
+
+        /* -- Step 2: assign dosages -- */
+        for (int j = 0; j < ncol; j++) {
+            int g   = gp[i + nrow * j];
+            int a   = ap[i + nrow * j];
+            int idx = i + nrow * j;
+            if (g == 0) continue;
+
+            /* pure ancestry */
+            int hit = 0;
+            for (int p = 0; p < K; p++) {
+                if (a == pure[p]) {
+                    out[p][idx] = (double) g;
+                    hit = 1;  break;
+                }
+            }
+            if (hit) continue;
+
+            /* mixed ancestry */
+            for (int m = 0; m < M; m++) {
+                if (a == mc[m]) {
+                    int pa = mp1[m], pb = mp2[m];
+                    if (g == 2) {
+                        out[pa][idx] = 1.0;
+                        out[pb][idx] = 1.0;
+                    } else {    /* g == 1: ambiguous het */
+                        double sum_ab = pk[pa] + pk[pb];
+                        if (sum_ab > 0.0) {
+                            out[pa][idx] = pk[pa] / sum_ab;
+                            out[pb][idx] = pk[pb] / sum_ab;
+                        } else {
+                            out[pa][idx] = 0.5;   /* singleton fallback */
+                            out[pb][idx] = 0.5;
+                        }
+                    }
+                    break;
+                }
+            }
+            /* unknown ancestry code: leave as 0 */
+        }
+    }
+
+    UNPROTECT(4);   /* dim, gt_i, anc_i, result */
+    return result;
+}
+
+// ============================================================================
+// split_phased_by_ancestry: Deterministic split using per-haplotype ancestry
+// ============================================================================
+// Each haplotype contributes its allele to whichever ancestry population it
+// was called as.  NA genotypes are treated as 0 (reference).  Any ancestry
+// code that is neither AFR nor EUR contributes nothing to either output.
+//
+// pop_codes: integer vector of length 2 — pop_codes[0] = AFR code,
+//            pop_codes[1] = EUR code (RFMix default: 0 and 1).
+static SEXP split_phased_by_ancestry_c(SEXP gt_hap0, SEXP gt_hap1,
+                                        SEXP anc_hap0, SEXP anc_hap1,
+                                        SEXP pop_codes) {
+    SEXP dim = PROTECT(getAttrib(gt_hap0, R_DimSymbol));
+    int nrow = INTEGER(dim)[0];
+    int ncol = INTEGER(dim)[1];
+    int afr_code = INTEGER(pop_codes)[0];
+    int eur_code = INTEGER(pop_codes)[1];
+
+    SEXP gh0 = PROTECT(coerceVector(gt_hap0, INTSXP));
+    SEXP gh1 = PROTECT(coerceVector(gt_hap1, INTSXP));
+    SEXP ah0 = PROTECT(coerceVector(anc_hap0, INTSXP));
+    SEXP ah1 = PROTECT(coerceVector(anc_hap1, INTSXP));
+
+    SEXP african  = PROTECT(allocMatrix(REALSXP, nrow, ncol));
+    SEXP european = PROTECT(allocMatrix(REALSXP, nrow, ncol));
+
+    int *gh0_ptr = INTEGER(gh0);
+    int *gh1_ptr = INTEGER(gh1);
+    int *ah0_ptr = INTEGER(ah0);
+    int *ah1_ptr = INTEGER(ah1);
+    double *afr_ptr = REAL(african);
+    double *eur_ptr = REAL(european);
+
+    int n = nrow * ncol;
+    for (int k = 0; k < n; k++) {
+        int g0 = (gh0_ptr[k] == NA_INTEGER) ? 0 : gh0_ptr[k];
+        int g1 = (gh1_ptr[k] == NA_INTEGER) ? 0 : gh1_ptr[k];
+        int a0 = ah0_ptr[k];
+        int a1 = ah1_ptr[k];
+
+        double afr = 0.0, eur = 0.0;
+        if (a0 == afr_code)      afr += g0;
+        else if (a0 == eur_code) eur += g0;
+
+        if (a1 == afr_code)      afr += g1;
+        else if (a1 == eur_code) eur += g1;
+
+        afr_ptr[k] = afr;
+        eur_ptr[k] = eur;
+    }
+
+    SEXP result = PROTECT(allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(result, 0, african);
+    SET_VECTOR_ELT(result, 1, european);
+    SEXP names = PROTECT(allocVector(STRSXP, 2));
+    SET_STRING_ELT(names, 0, mkChar("african"));
+    SET_STRING_ELT(names, 1, mkChar("european"));
+    setAttrib(result, R_NamesSymbol, names);
+
+    UNPROTECT(9);
+    return result;
+}
+
+// ============================================================================
+// split_phased_multi: K-population phased dosage splitting
+// ============================================================================
+// pop_codes: named integer vector of length K.
+//   pop_codes[p] is the ancestry code for population p.
+//   The output list has K matrices, named after pop_codes.
+// Each haplotype allele is routed to the pool whose code matches the
+// haplotype's local ancestry call.  Unrecognised codes contribute 0
+// to all pools.  NA genotypes are treated as 0 (reference allele).
+static SEXP split_phased_multi_c(SEXP gt_hap0, SEXP gt_hap1,
+                                   SEXP anc_hap0, SEXP anc_hap1,
+                                   SEXP pop_codes) {
+    int K = length(pop_codes);
+    int *codes = INTEGER(pop_codes);
+    SEXP code_names = getAttrib(pop_codes, R_NamesSymbol);
+
+    SEXP dim = PROTECT(getAttrib(gt_hap0, R_DimSymbol));
+    int nrow = INTEGER(dim)[0];
+    int ncol = INTEGER(dim)[1];
+    int n = nrow * ncol;
+
+    SEXP gh0 = PROTECT(coerceVector(gt_hap0, INTSXP));
+    SEXP gh1 = PROTECT(coerceVector(gt_hap1, INTSXP));
+    SEXP ah0 = PROTECT(coerceVector(anc_hap0, INTSXP));
+    SEXP ah1 = PROTECT(coerceVector(anc_hap1, INTSXP));
+
+    int *gh0_ptr = INTEGER(gh0);
+    int *gh1_ptr = INTEGER(gh1);
+    int *ah0_ptr = INTEGER(ah0);
+    int *ah1_ptr = INTEGER(ah1);
+
+    /* Allocate result list and K output matrices */
+    SEXP result = PROTECT(allocVector(VECSXP, K));
+    for (int p = 0; p < K; p++) {
+        SEXP mat = PROTECT(allocMatrix(REALSXP, nrow, ncol));
+        memset(REAL(mat), 0, n * sizeof(double));
+        SET_VECTOR_ELT(result, p, mat);
+        UNPROTECT(1);   /* mat now protected via result */
+    }
+
+    /* Cache per-population output pointers to avoid repeated VECTOR_ELT calls */
+    double **out = (double **) R_alloc(K, sizeof(double *));
+    for (int p = 0; p < K; p++)
+        out[p] = REAL(VECTOR_ELT(result, p));
+
+    /* Route each haplotype allele to its population pool */
+    for (int k = 0; k < n; k++) {
+        int g0 = (gh0_ptr[k] == NA_INTEGER) ? 0 : gh0_ptr[k];
+        int g1 = (gh1_ptr[k] == NA_INTEGER) ? 0 : gh1_ptr[k];
+        int a0 = ah0_ptr[k];
+        int a1 = ah1_ptr[k];
+
+        for (int p = 0; p < K; p++) {
+            if (a0 == codes[p]) { out[p][k] += g0; break; }
+        }
+        for (int p = 0; p < K; p++) {
+            if (a1 == codes[p]) { out[p][k] += g1; break; }
+        }
+    }
+
+    /* Name the output list after the pop_codes names */
+    if (code_names != R_NilValue) {
+        SEXP names = PROTECT(duplicate(code_names));
+        setAttrib(result, R_NamesSymbol, names);
+        UNPROTECT(1);
+    }
+
+    UNPROTECT(6);   /* dim, gh0, gh1, ah0, ah1, result */
+    return result;
+}
+
+// ============================================================================
 // Exported functions (registered in init.c)
 // ============================================================================
 SEXP count_ancestry_codes(SEXP mat, SEXP code) {
@@ -400,4 +688,21 @@ SEXP write_vcf_with_ancestry(SEXP vcf_path, SEXP gt_matrix, SEXP ancestry_matrix
 
 SEXP subset_vcf_by_range(SEXP vcf_path, SEXP chrom, SEXP start, SEXP end, SEXP output_path) {
     return subset_vcf_by_range_c(vcf_path, chrom, start, end, output_path);
+}
+
+SEXP split_phased_multi(SEXP gt_hap0, SEXP gt_hap1,
+                         SEXP anc_hap0, SEXP anc_hap1, SEXP pop_codes) {
+    return split_phased_multi_c(gt_hap0, gt_hap1, anc_hap0, anc_hap1, pop_codes);
+}
+
+SEXP split_by_ancestry_multi(SEXP gt, SEXP ancestry, SEXP pure_codes,
+                               SEXP m_code, SEXP m_pop1, SEXP m_pop2) {
+    return split_by_ancestry_multi_c(gt, ancestry, pure_codes,
+                                     m_code, m_pop1, m_pop2);
+}
+
+SEXP split_phased_by_ancestry(SEXP gt_hap0, SEXP gt_hap1,
+                               SEXP anc_hap0, SEXP anc_hap1,
+                               SEXP pop_codes) {
+    return split_phased_by_ancestry_c(gt_hap0, gt_hap1, anc_hap0, anc_hap1, pop_codes);
 }

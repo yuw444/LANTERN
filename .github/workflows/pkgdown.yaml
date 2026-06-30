@@ -1,0 +1,64 @@
+on:
+  push:
+    branches: [package]
+    paths:
+      - 'lantern/**'
+      - '.github/workflows/pkgdown.yaml'
+  workflow_dispatch:
+
+name: pkgdown
+
+concurrency:
+  group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4'
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libhdf5-dev libbz2-dev liblzma-dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: lantern
+          extra-packages: |
+            bioc::SeqArray
+            bioc::SeqVarTools
+            any::pkgdown
+            any::knitr
+            any::rmarkdown
+
+      - name: Install lantern package
+        run: R CMD INSTALL lantern/
+
+      - name: Build pkgdown site
+        run: |
+          cd lantern
+          Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          clean: false
+          branch: gh-pages
+          folder: lantern/docs

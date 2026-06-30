@@ -1,0 +1,18 @@
+# Project-local R Makevars for LANTERN pixi env
+# Overrides the system R Makevars (e.g. /hpc/apps/gcc/9.3.0) with pixi-bundled gcc 15.
+# This is referenced via R_MAKEVARS_USER from pixi tasks.
+
+CC = x86_64-conda-linux-gnu-cc -std=gnu23
+CXX = x86_64-conda-linux-gnu-c++ -std=gnu++17
+CXX11 = x86_64-conda-linux-gnu-c++
+CXX14 = x86_64-conda-linux-gnu-c++
+CXX17 = x86_64-conda-linux-gnu-c++
+CXX20 = x86_64-conda-linux-gnu-c++
+FC = x86_64-conda-linux-gnu-gfortran
+F77 = x86_64-conda-linux-gnu-gfortran
+
+# Use pixi-bundled CFLAGS/LDFLAGS only; drop the system gcc 9 paths
+CFLAGS = -O2 -fPIC
+CXXFLAGS = -O2 -fPIC
+LDFLAGS =
+SHLIB_CXXLD = $(CXX)
