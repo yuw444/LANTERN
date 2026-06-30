@@ -3,10 +3,12 @@
 ## Unphased splitting
 
 Functions for diploid genotype matrices where ancestry is summarised as
-a per-variant diploid code (1 = EUR/EUR, 2 = AFR/EUR, 3 = AFR/AFR).
+a per-variant diploid code.
 
 - [`split_by_ancestry()`](https://yuw444.github.io/LANTERN/reference/split_by_ancestry.md)
   : Split genotype matrix by ancestry
+- [`split_by_ancestry_multi()`](https://yuw444.github.io/LANTERN/reference/split_by_ancestry_multi.md)
+  : Split unphased genotype matrix by ancestry for K populations
 - [`run_ancestry_pipeline()`](https://yuw444.github.io/LANTERN/reference/run_ancestry_pipeline.md)
   : lantern: High-Level Workflow Functions
 - [`count_ancestry_codes()`](https://yuw444.github.io/LANTERN/reference/count_ancestry_codes.md)
@@ -19,6 +21,8 @@ available (e.g. from RFMix). Splitting is deterministic.
 
 - [`split_phased()`](https://yuw444.github.io/LANTERN/reference/split_phased.md)
   : Split phased haplotypes by ancestry
+- [`split_phased_multi()`](https://yuw444.github.io/LANTERN/reference/split_phased_multi.md)
+  : Split phased haplotypes into K population-specific dosage matrices
 - [`run_phased_pipeline()`](https://yuw444.github.io/LANTERN/reference/run_phased_pipeline.md)
   : Run phased ancestry splitting pipeline
 
