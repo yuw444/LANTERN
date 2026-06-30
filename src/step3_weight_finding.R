@@ -20,6 +20,12 @@ option_list <- list(
     default = "output.tsv",
     help = "Output TSV path [default %default]",
     metavar = "file"
+  ),
+  make_option(
+    c("-c", "--chr_id"),
+    type = "character",
+    default = "22",
+    help = "Chromosome ID to process [default %default]"
   )
 )
 
@@ -29,6 +35,8 @@ opt <- parse_args(opt_parser)
 pt_path <- opt$pt
 gene_group_path <- opt$gene
 out_file <- opt$out_file
+
+chr_id <- opt$chr_id
 
 library(data.table)
 library(dplyr)
@@ -56,38 +64,41 @@ df_gene_group <- setNames(
 
 # str(df_gene_group)
 
+
+
+df_gene_group <- df_gene_group %>% filter(chr == chr_id)
+
+df_gene_group <- df_gene_group %>% filter(pos %in% df_pt$pos1)
+
 genes_unique <- unique(df_gene_group$gene)
+
+afr_anc <- df_pt1 == 03
+eur_anc <- df_pt1 == 01
 
 library(doParallel)
 registerDoParallel(cores = 10)
-df_weight <- foreach(genes = genes_unique, .combine = rbind.data.frame) %dopar%
+df_weight <- foreach(genes = genes_unique, .combine = rbind.data.frame,
+                     .errorhandling = "remove") %dopar%
   {
-    vec_pos <- df_gene_group %>%
+    vec_pos <- unique(df_gene_group %>%
       filter(gene == genes) %>%
-      pull(pos)
+      pull(pos))
 
     pos_idx <- match(vec_pos, df_pt$pos1)
 
-    a <- apply(df_pt1[pos_idx, ] == 03, 1, sum) ## african ancestry
-    e <- apply(df_pt1[pos_idx, ] == 01, 1, sum) ## european ancestry
+    a <- apply(afr_anc[pos_idx, ], 1, sum, na.rm = TRUE) ## african ancestry
+    e <- apply(eur_anc[pos_idx, ], 1, sum, na.rm = TRUE) ## european ancestry
 
     return(data.frame(
       gene = genes,
-      a = a,
-      e = e
+      a = median(a),
+      e = median(e)
     ))
   }
 
 
-df_weight_final <- df_weight %>%
-  group_by(gene) %>%
-  summarise(
-    a = median(a),
-    e = median(e)
-  )
-
 write.table(
-  df_weight_final,
+  df_weight,
   file = out_file,
   row.names = FALSE,
   col.names = TRUE,

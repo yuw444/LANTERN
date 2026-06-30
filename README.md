@@ -1,12 +1,11 @@
-# Tractor Rare Variant Analysis
+# LANTERN (Leveraging local ANcestry Tracts to Enhance Rare variaNt aggregate associations)
 
 ## 1. Background
 
-* Homo siapen(diploid), the genome regions on homogolous pair of chromsomes could originate from different ancestries. 
-* We currently focus on two ancestries, **african(AFR)** and **european(EUR)**.
-* Similarly, two alleles of each variant could come from **pure african(03)**, **mixed ancestry(02)**, and **pure european(01)** in each subject.
-* The B allele count could be **1/1**, **0/1**, **1/0**, and **0/0**, as the phase information is unkown.
-* We assume that the effect of allele could be ancestry specific(**pure african**, **pure european**) or not(**mixed ancestry**).
+* LANTERN is a method for conducting aggregate rare-variant association tests using inferred local ancestry as additional information. 
+* For simplicity, in the following we demonstrate LANTERN on two ancestries, **african(AFR)** and **european(EUR)**.
+* LANTERN can be implemented on up to 5 ancestries. 
+
 
 
 ## 2. Data
@@ -23,9 +22,7 @@ Explanation:
 - Track: Half-open [start, end) (end excluded)
 - Rows: contiguous genome tracks or windows used in analysis
 - Columns: individual subjects in the cohort.
-- Entries: ancestry-of-origin code for the track in that subject (03 = pure African, 02 = mixed, 01 = pure European).
-- Interpretation example: for chr1:1,000-2,000, Subject_S1 has African-origin ancestry (03), Subject_S3 has European-origin (01), and Subject_S2 has mixed ancestry (02). This matrix is used to assign ancestry-specific allele effects or to filter variants by ancestry background.
-
+- Entries: Inferred ancestry (03 = 2 AFR chromosomes, 02 = 1 AFR and 1 EUR chromosome , 01 = 2 EUR chromosomes).
 
 ### Variant Matrix
 
@@ -50,6 +47,7 @@ Combine GT with the ancestry matrix to map alternate alleles to ancestry-of-orig
 | chr1:2,345 T>C              | 1/0:03             | 0/1:03             | 0/0:03             |
 | chr2:5,678 G>A              | 0/0:02             | 0/1:01             | 1/1:01             |
 
+<<<<<<< HEAD
 ## 3. Method
 
 ### Ancestry Specific Variant Matrix Split
@@ -161,6 +159,15 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 * Cauchy combination of per-ancestry p-values $\to p_c$
 
 For the 2-ancestry case: pure African $\to p_a$, pure European $\to p_e$, Cauchy combination $\to p_c$.
+=======
+
+### Association Detection
+
+* For testing association with rare alleles on AFR haplotypes we obtain p-value: $\mathbf p_{a}$
+* For testing association with rare alleles on EUR haplotypes we obtain p-value: $\mathbf p_{e}$
+* For testing association with rare alleles ignoring ancestry we obtain p-value: Observation association: $\mathbf p_{obs}$
+* The Cauchy-weighted combination between $p_a$ and $p_e$ results in $p_c$
+>>>>>>> origin/main
 
 
 ### 4. Pipeline
@@ -184,8 +191,8 @@ For the 2-ancestry case: pure African $\to p_a$, pure European $\to p_e$, Cauchy
   * No installation is needed, just copy the `./src` to your local machine
 
 * **Input**: 
-  * plink file that contains ancestry matrix
-  * vcf file that contains variant matrix, <u>highly suggest do it by chrosomes for the sake of memory</u>.
+  * plink file that contains inferred local ancestry matrix
+  * vcf file that contains variant matrix, <u>we highly suggest doing  this by chrosomes</u>.
   * kinship matrix rds `kinship_rds` file, with column name as `id`.
   * gene group tsv file without header `gene_group.tsv`, columns are gene, chr, pos, ref, alt, weight. For example,
 ```
@@ -198,7 +205,7 @@ GOLGA6L22	15	22466304	A	G	1
 HERC2P2	15	22554572	G	A	1
 HERC2P2	15	22554572	G	A	1
 ```
-  * clinical covariate tsv(csv, rds) file `data_file` with header, columns are id, response, var1, var2, ...
+  * covariate tsv(csv, rds) file `data_file` with header, columns are id, response, var1, var2, ...
 ```
 id	response	age	sex	PC1	PC2
 sample_001	1	63	M	-0.012	0.034
@@ -222,7 +229,7 @@ Rscript /path/to/step1_vcf_split_by_ancestry.R \
 
 * **Step 2**: Model the Association
   * use the `african_gds`, `european_gds` generated from **Step1**
-  * `respnose_type` could be one of *continous*, *binary*, or *count*
+  * `response_type` could be one of *continous*, *binary*, or *count*
 ```
 Rscript /path/to/step2_association_detection.R \
   --african_gds /path/to/gds \
@@ -240,5 +247,6 @@ Rscript /path/to/step2_association_detection.R \
 Rscript /path/to/step3_weight_finding.R \
   --pt /path/to/cache/pt_matrix_chr*.tsv \
   --gene_group /path/to/gene_group.tsv \
-  --out_file /path/to/tsv/file
+  --out_file /path/to/tsv/file \
+  --chr_id 15
 ```
