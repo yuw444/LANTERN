@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [package]
+    branches: [package, multi-ancestry]
     paths:
       - 'lantern/**'
       - '.github/workflows/R-CMD-check.yaml'
