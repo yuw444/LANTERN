@@ -458,19 +458,28 @@ convert them to GDS format.</li>
 <code>african_ds.gds</code> / <code>european_ds.gds</code> for the
 downstream gene-level tests (see
 <code><a href="../articles/gene-level-test.html">vignette("gene-level-test")</a></code>).</p>
-<p>For a real cohort BCF + MSP:</p>
+<p>The same call on a real cohort BCF + MSP (JHS chr19, 3313 samples,
+~44 k variants — runs when the raw data files are present):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
-<span>  vcf_path  <span class="op">=</span> <span class="st">"data/chr19.phased.bcf"</span>,</span>
-<span>  msp_path  <span class="op">=</span> <span class="st">"data/chr19.msp.tsv.gz"</span>,</span>
-<span>  out_path  <span class="op">=</span> <span class="st">"output/phased/"</span>,</span>
+<code class="sourceCode R"><span><span class="va">real_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
+<span>  vcf_path  <span class="op">=</span> <span class="st">"../../raw/LANTERN.phased.bcf"</span>,</span>
+<span>  msp_path  <span class="op">=</span> <span class="st">"../../raw/LANTERN_chr19.msp.tsv.gz"</span>,</span>
+<span>  out_path  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  chrom     <span class="op">=</span> <span class="st">"chr19"</span>,</span>
-<span>  write_vcf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  write_vcf <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose   <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># result$african, result$european — dosage matrices (variants × samples)</span></span>
-<span><span class="co"># result$variant_info             — data.frame: chrom, pos, ref, alt</span></span>
-<span><span class="co"># result$vcf_paths                — african_ds.vcf, european_ds.vcf, *.gds</span></span></code></pre></div>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Variants kept:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">real_result</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Samples:      "</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">real_result</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Monomorphic filtered:"</span>, <span class="va">real_result</span><span class="op">$</span><span class="va">overlap</span><span class="op">$</span><span class="va">n_monomorphic_filtered</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"First 3 variants:\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">real_result</span><span class="op">$</span><span class="va">variant_info</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Sanity checks</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Min dosage (must be &gt;= 0):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">real_result</span><span class="op">$</span><span class="va">african</span>, <span class="va">real_result</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Max AFR dosage (must be &lt;= 2):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">real_result</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Max EUR dosage (must be &lt;= 2):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">real_result</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>
