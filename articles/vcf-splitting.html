@@ -379,23 +379,98 @@ from raw files:</p>
 convert them to GDS format.</li>
 </ol>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Requires bcftools in PATH and real phased VCF + MSP files</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
-<span>  vcf_path <span class="op">=</span> <span class="st">"data/chr19.phased.bcf"</span>,</span>
-<span>  msp_path <span class="op">=</span> <span class="st">"data/chr19.msp.tsv.gz"</span>,</span>
+<code class="sourceCode R"><span><span class="co"># Build minimal synthetic VCF and MSP in a temp directory</span></span>
+<span><span class="va">tmp_dir</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">tmp_dir</span><span class="op">)</span></span>
+<span><span class="va">vcf_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp_dir</span>, <span class="st">"phased.vcf"</span><span class="op">)</span></span>
+<span><span class="va">msp_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp_dir</span>, <span class="st">"ancestry.msp.tsv"</span><span class="op">)</span></span>
+<span><span class="va">out_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp_dir</span>, <span class="st">"out"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 3 variants × 3 samples, phased GTs</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"##fileformat=VCFv4.1"</span>,</span>
+<span>  <span class="st">'##FORMAT=&lt;ID=GT,Number=1,Type=String,Description="Genotype"&gt;'</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#CHROM"</span>,<span class="st">"POS"</span>,<span class="st">"ID"</span>,<span class="st">"REF"</span>,<span class="st">"ALT"</span>,<span class="st">"QUAL"</span>,<span class="st">"FILTER"</span>,<span class="st">"INFO"</span>,</span>
+<span>          <span class="st">"FORMAT"</span>,<span class="st">"S1"</span>,<span class="st">"S2"</span>,<span class="st">"S3"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"1100"</span>,<span class="st">"."</span>,<span class="st">"A"</span>,<span class="st">"G"</span>,<span class="st">"100"</span>,<span class="st">"PASS"</span>,<span class="st">"."</span>,<span class="st">"GT"</span>,<span class="st">"0|1"</span>,<span class="st">"1|0"</span>,<span class="st">"0|0"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"1200"</span>,<span class="st">"."</span>,<span class="st">"C"</span>,<span class="st">"T"</span>,<span class="st">"100"</span>,<span class="st">"PASS"</span>,<span class="st">"."</span>,<span class="st">"GT"</span>,<span class="st">"1|1"</span>,<span class="st">"0|1"</span>,<span class="st">"1|0"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"2100"</span>,<span class="st">"."</span>,<span class="st">"G"</span>,<span class="st">"A"</span>,<span class="st">"100"</span>,<span class="st">"PASS"</span>,<span class="st">"."</span>,<span class="st">"GT"</span>,<span class="st">"0|0"</span>,<span class="st">"1|0"</span>,<span class="st">"0|1"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
+<span><span class="op">)</span>, <span class="va">vcf_path</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># RFMix MSP: 2 ancestry tracts, pop codes AFR=0 EUR=1</span></span>
+<span><span class="co">#   tract 1 [1000,2000): S1=AFR|EUR  S2=EUR|AFR  S3=AFR|EUR</span></span>
+<span><span class="co">#   tract 2 [2000,3000): S1=EUR|AFR  S2=AFR|EUR  S3=EUR|AFR</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#Subpopulation order/codes: AFR=0"</span>, <span class="st">"EUR=1"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#chm"</span>,<span class="st">"spos"</span>,<span class="st">"epos"</span>,<span class="st">"sgpos"</span>,<span class="st">"egpos"</span>,<span class="st">"n snps"</span>,</span>
+<span>          <span class="st">"S1.0"</span>,<span class="st">"S1.1"</span>,<span class="st">"S2.0"</span>,<span class="st">"S2.1"</span>,<span class="st">"S3.0"</span>,<span class="st">"S3.1"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"1000"</span>,<span class="st">"2000"</span>,<span class="st">"0.0"</span>,<span class="st">"0.1"</span>,<span class="st">"2"</span>,<span class="st">"0"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span>,<span class="st">"0"</span>,<span class="st">"1"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"2000"</span>,<span class="st">"3000"</span>,<span class="st">"0.1"</span>,<span class="st">"0.2"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span>,<span class="st">"0"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
+<span><span class="op">)</span>, <span class="va">msp_path</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
+<span>  vcf_path  <span class="op">=</span> <span class="va">vcf_path</span>,</span>
+<span>  msp_path  <span class="op">=</span> <span class="va">msp_path</span>,</span>
+<span>  out_path  <span class="op">=</span> <span class="va">out_path</span>,</span>
+<span>  write_vcf <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose   <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African dosage (variants × samples):\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; African dosage (variants × samples):</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">african</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    0    0    0</span></span>
+<span><span class="co">#&gt; [2,]    1    1    1</span></span>
+<span><span class="co">#&gt; [3,]    0    1    1</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nEuropean dosage:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; European dosage:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">european</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    1    1    0</span></span>
+<span><span class="co">#&gt; [2,]    1    0    0</span></span>
+<span><span class="co">#&gt; [3,]    0    0    0</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nVariant info:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Variant info:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">variant_info</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   chrom  pos ref alt</span></span>
+<span><span class="co">#&gt; 1    19 1100   A   G</span></span>
+<span><span class="co">#&gt; 2    19 1200   C   T</span></span>
+<span><span class="co">#&gt; 3    19 2100   G   A</span></span>
+<span></span>
+<span><span class="co"># Sanity check: AFR + EUR == hap0 + hap1 everywhere</span></span>
+<span><span class="va">vcf_lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">vcf_path</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">vcf_lines</span>, <span class="kw">function</span><span class="op">(</span><span class="va">l</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">gts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="va">l</span>, <span class="st">"\t"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">10</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">gts</span>, <span class="kw">function</span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="va">g</span>, <span class="st">"|"</span>, fixed<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">max_err</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">african</span> <span class="op">+</span> <span class="va">result</span><span class="op">$</span><span class="va">european</span><span class="op">)</span> <span class="op">-</span> <span class="va">raw</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nMax reconstruction error (must be 0):"</span>, <span class="va">max_err</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Max reconstruction error (must be 0): 0</span></span></code></pre></div>
+<p>The output matrices have rows = variants and columns = samples. With
+<code>write_vcf = FALSE</code> no files are written; set it to
+<code>TRUE</code> (and provide a real BCF path) to also produce
+<code>african_ds.gds</code> / <code>european_ds.gds</code> for the
+downstream gene-level tests (see
+<code><a href="../articles/gene-level-test.html">vignette("gene-level-test")</a></code>).</p>
+<p>For a real cohort BCF + MSP:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
+<span>  vcf_path  <span class="op">=</span> <span class="st">"data/chr19.phased.bcf"</span>,</span>
+<span>  msp_path  <span class="op">=</span> <span class="st">"data/chr19.msp.tsv.gz"</span>,</span>
 <span>  out_path  <span class="op">=</span> <span class="st">"output/phased/"</span>,</span>
 <span>  chrom     <span class="op">=</span> <span class="st">"chr19"</span>,</span>
 <span>  write_vcf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># result$african  — dosage matrix, rows=variants, cols=samples</span></span>
-<span><span class="co"># result$european — dosage matrix</span></span>
-<span><span class="co"># result$variant_info — data.frame: chrom, pos, ref, alt</span></span>
-<span><span class="co"># result$vcf_paths    — paths to african_ds.vcf, european_ds.vcf, *.gds</span></span></code></pre></div>
-<p>The output <code>african_ds.gds</code> / <code>european_ds.gds</code>
-files are the primary input for the downstream gene-level tests (see
-<code><a href="../articles/gene-level-test.html">vignette("gene-level-test")</a></code>).</p>
+<span><span class="co"># result$african, result$european — dosage matrices (variants × samples)</span></span>
+<span><span class="co"># result$variant_info             — data.frame: chrom, pos, ref, alt</span></span>
+<span><span class="co"># result$vcf_paths                — african_ds.vcf, european_ds.vcf, *.gds</span></span></code></pre></div>
 <hr>
 </div>
 </div>
