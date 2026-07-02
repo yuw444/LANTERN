@@ -70,7 +70,14 @@ Run ancestry splitting pipeline</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_ancestry_pipeline</span><span class="op">(</span><span class="va">gt_matrix</span>, <span class="va">pt_matrix</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_ancestry_pipeline</span><span class="op">(</span></span>
+<span>  gt_matrix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pt_matrix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  vcf_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  msp_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  chrom <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -78,18 +85,36 @@ Run ancestry splitting pipeline</p>
 
 
 <dl><dt id="arg-gt-matrix">gt_matrix<a class="anchor" aria-label="anchor" href="#arg-gt-matrix"></a></dt>
-<dd><p>Integer matrix of genotypes (rows=variants, cols=samples)
-Values: 0=homozygous ref, 1=heterozygous, 2=homozygous alt
-rownames: variant IDs (e.g., "chr:pos" or any identifier)
-colnames: sample IDs</p></dd>
+<dd><p>Integer matrix of genotypes (rows=variants, cols=samples).
+Values: 0=homozygous ref, 1=heterozygous, 2=homozygous alt.
+rownames: variant IDs (e.g., <code>"chr:pos"</code>). colnames: sample IDs.
+May be <code>NULL</code> when <code>vcf_path</code> and <code>msp_path</code> are supplied.</p></dd>
 
 
 <dt id="arg-pt-matrix">pt_matrix<a class="anchor" aria-label="anchor" href="#arg-pt-matrix"></a></dt>
 <dd><p>Integer matrix of parent-of-origin ancestry codes
-(rows=samples, cols=regions)
-Values: 1=EUR/EUR, 2=AFR/EUR (mixed), 3=AFR/AFR
-rownames: sample IDs (must match colnames of gt_matrix)
-colnames: region IDs (e.g., "chr:start-end")</p></dd>
+(rows=samples, cols=regions/variants).
+Values: 1=EUR/EUR, 2=AFR/EUR (mixed), 3=AFR/AFR.
+rownames: sample IDs (must match colnames of <code>gt_matrix</code>).
+colnames: region IDs (e.g., <code>"chr:start-end"</code>).
+May be <code>NULL</code> when <code>vcf_path</code> and <code>msp_path</code> are supplied.</p></dd>
+
+
+<dt id="arg-vcf-path">vcf_path<a class="anchor" aria-label="anchor" href="#arg-vcf-path"></a></dt>
+<dd><p>Path to a phased VCF or BCF file.  When supplied together
+with <code>msp_path</code>, the function builds the genotype and ancestry
+matrices directly from these files (bcftools must be in PATH), bypassing
+the <code>gt_matrix</code>/<code>pt_matrix</code> arguments.</p></dd>
+
+
+<dt id="arg-msp-path">msp_path<a class="anchor" aria-label="anchor" href="#arg-msp-path"></a></dt>
+<dd><p>Path to an RFMix MSP file (plain text or gzipped TSV).
+Used together with <code>vcf_path</code> as a shortcut input.</p></dd>
+
+
+<dt id="arg-chrom">chrom<a class="anchor" aria-label="anchor" href="#arg-chrom"></a></dt>
+<dd><p>Chromosome name to restrict to (e.g. <code>"chr19"</code>).
+Only used when <code>vcf_path</code>/<code>msp_path</code> are supplied.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -106,7 +131,7 @@ colnames: region IDs (e.g., "chr:start-end")</p></dd>
 <dd><p>European ancestry-specific dosage matrix</p></dd>
 
   <dt>counts</dt>
-<dd><p>List of ancestry counts per region</p></dd>
+<dd><p>List of ancestry counts per region/sample</p></dd>
 
   <dt>overlap</dt>
 <dd><p>Overlap information</p></dd>
@@ -160,6 +185,13 @@ Memory efficient: single-pass subsetting using index vectors.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> === Pipeline Complete ===</span>
 <span class="r-in"><span><span class="co"># Only sample_A and sample_B are kept (common to both)</span></span></span>
 <span class="r-in"><span><span class="co"># Only chr1:100 and chr1:200 that overlap regions are kept</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Shortcut: build matrices directly from VCF + MSP</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">run_ancestry_pipeline</span><span class="op">(</span>vcf_path <span class="op">=</span> <span class="st">"data/chr19.phased.bcf"</span>,</span></span>
+<span class="r-in"><span>                                 msp_path <span class="op">=</span> <span class="st">"data/chr19.msp.tsv.gz"</span>,</span></span>
+<span class="r-in"><span>                                 chrom    <span class="op">=</span> <span class="st">"chr19"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
