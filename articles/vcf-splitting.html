@@ -57,6 +57,9 @@
     <li>
       <a href="../articles/gene-level-test.html">Ancestry-stratified gene-level burden tests</a>
     </li>
+    <li>
+      <a href="../articles/complete-workflow.html">Complete LANTERN workflow: split → GDS → test → combine</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -493,7 +496,11 @@ parses the VCF and MSP once and returns a named list with two elements,
 <code>$phased</code> and <code>$unphased</code>, each containing
 <code>african</code>, <code>european</code>, <code>variant_info</code>,
 <code>sample_ids</code>, and <code>overlap</code>.</p>
-<p>The synthetic VCF and MSP created above are still in scope:</p>
+<p>The synthetic VCF and MSP created above are still in scope. The
+return value is a named list: <code>$phased</code> and
+<code>$unphased</code>, each containing one matrix per population (named
+by the MSP population labels) plus <code>variant_info</code>,
+<code>sample_ids</code>, and <code>overlap</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span></span>
 <span>  vcf_path <span class="op">=</span> <span class="va">vcf_path</span>,</span>
@@ -501,16 +508,23 @@ parses the VCF and MSP once and returns a named list with two elements,
 <span>  verbose  <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Population names come directly from the MSP header</span></span>
+<span><span class="va">pop_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">phased</span><span class="op">)</span>,</span>
+<span>                     <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variant_info"</span>, <span class="st">"sample_ids"</span>, <span class="st">"overlap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Populations:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">pop_names</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Populations: AFR, EUR</span></span>
+<span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== $phased ===\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; === $phased ===</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African dosage:\n"</span><span class="op">)</span>;  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span></span>
-<span><span class="co">#&gt; African dosage:</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="va">pop_names</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"dosage:\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">phased</span><span class="op">[[</span><span class="va">p</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; AFR dosage:</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
 <span><span class="co">#&gt; [1,]    0    0    0</span></span>
 <span><span class="co">#&gt; [2,]    1    1    1</span></span>
 <span><span class="co">#&gt; [3,]    0    1    1</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"European dosage:\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span></span>
-<span><span class="co">#&gt; European dosage:</span></span>
+<span><span class="co">#&gt; EUR dosage:</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
 <span><span class="co">#&gt; [1,]    1    1    0</span></span>
 <span><span class="co">#&gt; [2,]    1    0    0</span></span>
@@ -519,17 +533,18 @@ parses the VCF and MSP once and returns a named list with two elements,
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== $unphased ===\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === $unphased ===</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African dosage:\n"</span><span class="op">)</span>;  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span></span>
-<span><span class="co">#&gt; African dosage:</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="va">pop_names</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"dosage:\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">unphased</span><span class="op">[[</span><span class="va">p</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; AFR dosage:</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
 <span><span class="co">#&gt; [1,]  0.5  0.5  0.0</span></span>
-<span><span class="co">#&gt; [2,]  1.0  1.0  1.0</span></span>
+<span><span class="co">#&gt; [2,]  1.0  0.5  0.5</span></span>
 <span><span class="co">#&gt; [3,]  0.0  0.5  0.5</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"European dosage:\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span></span>
-<span><span class="co">#&gt; European dosage:</span></span>
+<span><span class="co">#&gt; EUR dosage:</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
 <span><span class="co">#&gt; [1,]  0.5  0.5  0.0</span></span>
-<span><span class="co">#&gt; [2,]  1.0  1.0  1.0</span></span>
+<span><span class="co">#&gt; [2,]  1.0  0.5  0.5</span></span>
 <span><span class="co">#&gt; [3,]  0.0  0.5  0.5</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nVariants in both modes:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">variant_info</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -537,12 +552,85 @@ parses the VCF and MSP once and returns a named list with two elements,
 <span><span class="co">#&gt; Variants in both modes: 3</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Samples:               "</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">combined</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">sample_ids</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Samples:                3</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="three-population-example">3.1 Three-population example<a class="anchor" aria-label="anchor" href="#three-population-example"></a>
+</h3>
+<p>The same function works unchanged for K &gt; 2. Here we add a Native
+American (NAT) population:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vcf3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp_dir</span>, <span class="st">"phased3.vcf"</span><span class="op">)</span></span>
+<span><span class="va">msp3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp_dir</span>, <span class="st">"ancestry3.msp.tsv"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"##fileformat=VCFv4.1"</span>,</span>
+<span>  <span class="st">'##FORMAT=&lt;ID=GT,Number=1,Type=String,Description="Genotype"&gt;'</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#CHROM"</span>,<span class="st">"POS"</span>,<span class="st">"ID"</span>,<span class="st">"REF"</span>,<span class="st">"ALT"</span>,<span class="st">"QUAL"</span>,<span class="st">"FILTER"</span>,<span class="st">"INFO"</span>,</span>
+<span>          <span class="st">"FORMAT"</span>,<span class="st">"S1"</span>,<span class="st">"S2"</span>,<span class="st">"S3"</span><span class="op">)</span>, collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"1500"</span>,<span class="st">"."</span>,<span class="st">"A"</span>,<span class="st">"G"</span>,<span class="st">"100"</span>,<span class="st">"PASS"</span>,<span class="st">"."</span>,<span class="st">"GT"</span>,<span class="st">"1|0"</span>,<span class="st">"0|1"</span>,<span class="st">"1|1"</span><span class="op">)</span>,</span>
+<span>        collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"2500"</span>,<span class="st">"."</span>,<span class="st">"C"</span>,<span class="st">"T"</span>,<span class="st">"100"</span>,<span class="st">"PASS"</span>,<span class="st">"."</span>,<span class="st">"GT"</span>,<span class="st">"0|0"</span>,<span class="st">"1|0"</span>,<span class="st">"0|1"</span><span class="op">)</span>,</span>
+<span>        collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span></span>
+<span><span class="op">)</span>, <span class="va">vcf3</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Three populations: AFR=0, EUR=1, NAT=2</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#Subpopulation order/codes: AFR=0"</span>, <span class="st">"EUR=1"</span>, <span class="st">"NAT=2"</span><span class="op">)</span>,</span>
+<span>        collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#chm"</span>,<span class="st">"spos"</span>,<span class="st">"epos"</span>,<span class="st">"sgpos"</span>,<span class="st">"egpos"</span>,<span class="st">"n snps"</span>,</span>
+<span>          <span class="st">"S1.0"</span>,<span class="st">"S1.1"</span>,<span class="st">"S2.0"</span>,<span class="st">"S2.1"</span>,<span class="st">"S3.0"</span>,<span class="st">"S3.1"</span><span class="op">)</span>, collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="co"># tract 1 [1000,2000): S1=AFR|EUR  S2=EUR|NAT  S3=AFR|NAT</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"1000"</span>,<span class="st">"2000"</span>,<span class="st">"0.0"</span>,<span class="st">"0.1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"2"</span>,<span class="st">"0"</span>,<span class="st">"2"</span><span class="op">)</span>,</span>
+<span>        collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span>,</span>
+<span>  <span class="co"># tract 2 [2000,3000): S1=EUR|AFR  S2=AFR|EUR  S3=NAT|EUR</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"2000"</span>,<span class="st">"3000"</span>,<span class="st">"0.1"</span>,<span class="st">"0.2"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span>,<span class="st">"0"</span>,<span class="st">"1"</span>,<span class="st">"2"</span>,<span class="st">"1"</span><span class="op">)</span>,</span>
+<span>        collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span></span>
+<span><span class="op">)</span>, <span class="va">msp3</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">combined3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span><span class="va">vcf3</span>, <span class="va">msp3</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pop3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">combined3</span><span class="op">$</span><span class="va">phased</span><span class="op">)</span>,</span>
+<span>                <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variant_info"</span>, <span class="st">"sample_ids"</span>, <span class="st">"overlap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Populations:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">pop3</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Populations: AFR, EUR, NAT</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== Phased dosages ===\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; === Phased dosages ===</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="va">pop3</span><span class="op">)</span> <span class="op">{</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">":\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined3</span><span class="op">$</span><span class="va">phased</span><span class="op">[[</span><span class="va">p</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">}</span></span>
+<span><span class="co">#&gt; AFR :</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    1    0    1</span></span>
+<span><span class="co">#&gt; [2,]    0    1    0</span></span>
+<span><span class="co">#&gt; EUR :</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    0    0    0</span></span>
+<span><span class="co">#&gt; [2,]    0    0    1</span></span>
+<span><span class="co">#&gt; NAT :</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    0    1    1</span></span>
+<span><span class="co">#&gt; [2,]    0    0    0</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== Unphased dosages ===\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; === Unphased dosages ===</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="va">pop3</span><span class="op">)</span> <span class="op">{</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">":\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined3</span><span class="op">$</span><span class="va">unphased</span><span class="op">[[</span><span class="va">p</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">}</span></span>
+<span><span class="co">#&gt; AFR :</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    1  0.0    1</span></span>
+<span><span class="co">#&gt; [2,]    0  0.5    0</span></span>
+<span><span class="co">#&gt; EUR :</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    0  0.0  0.0</span></span>
+<span><span class="co">#&gt; [2,]    0  0.5  0.5</span></span>
+<span><span class="co">#&gt; NAT :</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]    0    1  1.0</span></span>
+<span><span class="co">#&gt; [2,]    0    0  0.5</span></span></code></pre></div>
 <p>The phased and unphased matrices share the same variant set here
 because no extra variants become monomorphic under one mode but not the
-other. For rare-variant-rich real cohorts the two variant_info frames
-may differ by a handful of rows.</p>
+other. For rare-variant-rich real cohorts the two
+<code>variant_info</code> frames may differ by a handful of rows.</p>
 <p>On the real JHS chr19 cohort (runs when raw files are present):</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">combined_real</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span></span>
 <span>  vcf_path <span class="op">=</span> <span class="st">"../../raw/LANTERN.phased.bcf"</span>,</span>
 <span>  msp_path <span class="op">=</span> <span class="st">"../../raw/LANTERN_chr19.msp.tsv.gz"</span>,</span>
@@ -550,28 +638,28 @@ may differ by a handful of rows.</p>
 <span>  verbose  <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="va">pop_r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variant_info"</span>, <span class="st">"sample_ids"</span>, <span class="st">"overlap"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== Phased ===\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Variants x samples:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"x"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"AFR total dosage:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>,  <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"EUR total dosage:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Dosage range:      "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">african</span>,</span>
-<span>                                <span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="st">"–"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">african</span>, <span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Variants x samples:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">variant_info</span><span class="op">)</span>, <span class="st">"x"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">$</span><span class="va">sample_ids</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="va">pop_r</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"total dosage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">phased</span><span class="op">[[</span><span class="va">p</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== Unphased ===\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Variants x samples:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"x"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"AFR total dosage:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>,  <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"EUR total dosage:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Dosage range:      "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">african</span>,</span>
-<span>                                <span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="st">"–"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">african</span>, <span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">european</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Variants x samples:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">variant_info</span><span class="op">)</span>, <span class="st">"x"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">$</span><span class="va">sample_ids</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="va">pop_r</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"total dosage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">combined_real</span><span class="op">$</span><span class="va">unphased</span><span class="op">[[</span><span class="va">p</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nNote: AFR totals differ slightly because phased assigns alleles\n"</span>,</span>
-<span>    <span class="st">"deterministically while unphased uses p1/p2 proportions for\n"</span>,</span>
-<span>    <span class="st">"ambiguous mixed heterozygotes.\n"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nNote: totals differ slightly because phased assigns alleles\n"</span>,</span>
+<span>    <span class="st">"deterministically while unphased uses proportional splitting\n"</span>,</span>
+<span>    <span class="st">"for ambiguous mixed heterozygotes.\n"</span><span class="op">)</span></span></code></pre></div>
 <hr>
+</div>
 </div>
 <div class="section level2">
 <h2 id="choosing-between-unphased-and-phased">4 Choosing between unphased and phased<a class="anchor" aria-label="anchor" href="#choosing-between-unphased-and-phased"></a>

@@ -57,6 +57,9 @@
     <li>
       <a href="../articles/gene-level-test.html">Ancestry-stratified gene-level burden tests</a>
     </li>
+    <li>
+      <a href="../articles/complete-workflow.html">Complete LANTERN workflow: split → GDS → test → combine</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -199,59 +202,30 @@ code matrix, then call the LANTERN C backend.</p>
 <code>DS</code> (dosage) FORMAT field. We create them from temporary
 VCFs.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Helper: write a minimal VCF with GT:DS format</span></span>
-<span><span class="va">write_ds_vcf</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span>, <span class="va">dosage_mat</span>, <span class="va">sample_ids</span>,</span>
-<span>                         <span class="va">chrom</span>, <span class="va">positions</span>, <span class="va">ref</span>, <span class="va">alt</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">n_var</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">dosage_mat</span><span class="op">)</span></span>
-<span>  <span class="va">n_samp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">dosage_mat</span><span class="op">)</span></span>
-<span>  <span class="va">gt_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0/0"</span>, <span class="st">"0/1"</span>, <span class="st">"1/1"</span><span class="op">)</span></span>
-<span></span>
-<span>  <span class="va">header</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="st">"##fileformat=VCFv4.1"</span>,</span>
-<span>    <span class="st">'##FORMAT=&lt;ID=GT,Number=1,Type=String,Description="Genotype"&gt;'</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'##FORMAT=&lt;ID=DS,Number=1,Type=Float,'</span>,</span>
-<span>           <span class="st">'Description="Ancestry-specific dosage of the alternate allele"&gt;'</span><span class="op">)</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#CHROM"</span>, <span class="st">"POS"</span>, <span class="st">"ID"</span>, <span class="st">"REF"</span>, <span class="st">"ALT"</span>,</span>
-<span>            <span class="st">"QUAL"</span>, <span class="st">"FILTER"</span>, <span class="st">"INFO"</span>, <span class="st">"FORMAT"</span>, <span class="va">sample_ids</span><span class="op">)</span>,</span>
-<span>          collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span>  <span class="va">data_lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_var</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">ds</span>        <span class="op">&lt;-</span> <span class="va">dosage_mat</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span></span>
-<span>    <span class="va">gt_idx</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">0L</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">ds</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>    <span class="va">gt_str</span>    <span class="op">&lt;-</span> <span class="va">gt_map</span><span class="op">[</span><span class="va">gt_idx</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">]</span></span>
-<span>    <span class="va">samp_flds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">gt_str</span>, <span class="st">":"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.4f"</span>, <span class="va">ds</span><span class="op">)</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">chrom</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">positions</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="st">"."</span>, <span class="va">ref</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">alt</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>,</span>
-<span>            <span class="st">"."</span>, <span class="st">"PASS"</span>, <span class="st">"."</span>, <span class="st">"GT:DS"</span>, <span class="va">samp_flds</span><span class="op">)</span>,</span>
-<span>          collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
-<span>  <span class="op">}</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1L</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">header</span>, <span class="va">data_lines</span><span class="op">)</span>, <span class="va">path</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/zhengxwen/SeqArray" class="external-link">SeqArray</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Variant metadata matching our simulated positions</span></span>
-<span><span class="va">positions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1000000L</span>, by <span class="op">=</span> <span class="fl">500L</span>, length.out <span class="op">=</span> <span class="va">N_VAR</span><span class="op">)</span></span>
+<span><span class="va">positions</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1000000L</span>, by <span class="op">=</span> <span class="fl">500L</span>, length.out <span class="op">=</span> <span class="va">N_VAR</span><span class="op">)</span></span>
 <span><span class="va">ref_allele</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="va">N_VAR</span><span class="op">)</span></span>
 <span><span class="va">alt_allele</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"T"</span>, <span class="va">N_VAR</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Create temporary VCF → GDS for each ancestry</span></span>
-<span><span class="va">vcf_afr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".vcf"</span><span class="op">)</span></span>
-<span><span class="va">vcf_eur</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".vcf"</span><span class="op">)</span></span>
+<span><span class="va">vi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  chrom <span class="op">=</span> <span class="va">CHROM</span>, pos <span class="op">=</span> <span class="va">positions</span>,</span>
+<span>  ref   <span class="op">=</span> <span class="va">ref_allele</span>, alt <span class="op">=</span> <span class="va">alt_allele</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">gds_afr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".gds"</span><span class="op">)</span></span>
 <span><span class="va">gds_eur</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".gds"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">write_ds_vcf</span><span class="op">(</span><span class="va">vcf_afr</span>, <span class="va">ds_afr</span>, <span class="va">samp_id</span>, <span class="va">CHROM</span>, <span class="va">positions</span>, <span class="va">ref_allele</span>, <span class="va">alt_allele</span><span class="op">)</span></span>
-<span><span class="fu">write_ds_vcf</span><span class="op">(</span><span class="va">vcf_eur</span>, <span class="va">ds_eur</span>, <span class="va">samp_id</span>, <span class="va">CHROM</span>, <span class="va">positions</span>, <span class="va">ref_allele</span>, <span class="va">alt_allele</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/SeqArray/man/seqVCF2GDS.html" class="external-link">seqVCF2GDS</a></span><span class="op">(</span><span class="va">vcf_afr</span>, <span class="va">gds_afr</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/SeqArray/man/seqVCF2GDS.html" class="external-link">seqVCF2GDS</a></span><span class="op">(</span><span class="va">vcf_eur</span>, <span class="va">gds_eur</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co"># write_dosage_gds() handles the VCF → GDS conversion</span></span>
+<span><span class="fu"><a href="../reference/write_dosage_gds.html">write_dosage_gds</a></span><span class="op">(</span><span class="va">ds_afr</span>, <span class="va">vi</span>, <span class="va">samp_id</span>, <span class="va">gds_afr</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/write_dosage_gds.html">write_dosage_gds</a></span><span class="op">(</span><span class="va">ds_eur</span>, <span class="va">vi</span>, <span class="va">samp_id</span>, <span class="va">gds_eur</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"GDS files created:\n"</span>, <span class="va">gds_afr</span>, <span class="st">"\n"</span>, <span class="va">gds_eur</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; GDS files created:</span></span>
-<span><span class="co">#&gt;  /tmp/Rtmpqy5gbu/file1e243ae0d65d.gds </span></span>
-<span><span class="co">#&gt;  /tmp/Rtmpqy5gbu/file1e247add298b.gds</span></span></code></pre></div>
+<span><span class="co">#&gt;  /tmp/RtmpytRCA9/file1e6a7318f950.gds </span></span>
+<span><span class="co">#&gt;  /tmp/RtmpytRCA9/file1e6a65fbd6f9.gds</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -262,7 +236,7 @@ header:</p>
 <pre><code>gene_name   chrom   pos   ref   alt   weight</code></pre>
 <p>The <code>weight</code> column is typically 1 (unweighted burden) or
 a function of MAF (e.g. Beta(1,25) weights).</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gene_group_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".tsv"</span><span class="op">)</span></span>
 <span><span class="va">gene_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  gene  <span class="op">=</span> <span class="va">GENE</span>,</span>
@@ -289,7 +263,7 @@ a function of MAF (e.g. Beta(1,25) weights).</p>
 </h2>
 <p>The null mixed model is fit <strong>once</strong> and reused for all
 three SMMAT calls:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">GMMAT</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># glmmkin: logistic GLMM for case/control phenotype</span></span>
@@ -312,7 +286,7 @@ independence.</p>
 <div class="section level2">
 <h2 id="running-smmat-gene-level-tests">5 Running SMMAT gene-level tests<a class="anchor" aria-label="anchor" href="#running-smmat-gene-level-tests"></a>
 </h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">run_smmat</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">gds_file</span>, <span class="va">is_dosage</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/GMMAT/man/SMMAT.html" class="external-link">SMMAT</a></span><span class="op">(</span></span>
 <span>    <span class="va">model0</span>,</span>
@@ -339,23 +313,18 @@ omnibus p-value).</p>
 <div class="section level2">
 <h2 id="interpreting-and-combining-results">6 Interpreting and combining results<a class="anchor" aria-label="anchor" href="#interpreting-and-combining-results"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Bind AA / EE / observed into a single data.frame for the gene</span></span>
 <span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  gene     <span class="op">=</span> <span class="va">res_aa</span><span class="op">$</span><span class="va">gene</span>,</span>
-<span>  p_aa     <span class="op">=</span> <span class="va">res_aa</span><span class="op">$</span><span class="va">p_SMMAT</span>,</span>
-<span>  p_ee     <span class="op">=</span> <span class="va">res_ee</span><span class="op">$</span><span class="va">p_SMMAT</span>,</span>
-<span>  p_obs    <span class="op">=</span> <span class="va">res_obs</span><span class="op">$</span><span class="va">p_SMMAT</span></span>
+<span>  gene  <span class="op">=</span> <span class="va">res_aa</span><span class="op">$</span><span class="va">gene</span>,</span>
+<span>  p_aa  <span class="op">=</span> <span class="va">res_aa</span><span class="op">$</span><span class="va">p_SMMAT</span>,</span>
+<span>  p_ee  <span class="op">=</span> <span class="va">res_ee</span><span class="op">$</span><span class="va">p_SMMAT</span>,</span>
+<span>  p_obs <span class="op">=</span> <span class="va">res_obs</span><span class="op">$</span><span class="va">p_SMMAT</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Cauchy combination of AA and EE p-values into a multi-ancestry p-value</span></span>
-<span><span class="va">cauchy_p</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Han &amp; Liu (2020) Cauchy combination test</span></span>
-<span>  <span class="va">T_stat</span> <span class="op">&lt;-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">tan</a></span><span class="op">(</span><span class="op">(</span><span class="fl">0.5</span> <span class="op">-</span> <span class="va">p1</span><span class="op">)</span> <span class="op">*</span> <span class="va">pi</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">tan</a></span><span class="op">(</span><span class="op">(</span><span class="fl">0.5</span> <span class="op">-</span> <span class="va">p2</span><span class="op">)</span> <span class="op">*</span> <span class="va">pi</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/Cauchy.html" class="external-link">pcauchy</a></span><span class="op">(</span><span class="va">T_stat</span>, lower.tail <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">combined</span><span class="op">$</span><span class="va">p_cauchy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mapply.html" class="external-link">mapply</a></span><span class="op">(</span><span class="va">cauchy_p</span>, <span class="va">combined</span><span class="op">$</span><span class="va">p_aa</span>, <span class="va">combined</span><span class="op">$</span><span class="va">p_ee</span><span class="op">)</span></span>
+<span><span class="co"># Cauchy combination of AA and EE p-values (see ?cauchy_combine)</span></span>
+<span><span class="va">combined</span><span class="op">$</span><span class="va">p_cauchy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mapply.html" class="external-link">mapply</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">e</span><span class="op">)</span> <span class="fu"><a href="../reference/cauchy_combine.html">cauchy_combine</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">e</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                             <span class="va">combined</span><span class="op">$</span><span class="va">p_aa</span>, <span class="va">combined</span><span class="op">$</span><span class="va">p_ee</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">combined</span><span class="op">)</span></span></code></pre></div>
 <p>A significant <code>p_cauchy</code> with <code>p_aa</code> and/or
@@ -366,8 +335,8 @@ signal is ancestry-specific — the key LANTERN finding.</p>
 <div class="section level2">
 <h2 id="cleanup">7 Cleanup<a class="anchor" aria-label="anchor" href="#cleanup"></a>
 </h2>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">vcf_afr</span>, <span class="va">vcf_eur</span>, <span class="va">gds_afr</span>, <span class="va">gds_eur</span>, <span class="va">gene_group_file</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">gds_afr</span>, <span class="va">gds_eur</span>, <span class="va">gene_group_file</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">

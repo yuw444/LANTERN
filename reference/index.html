@@ -39,6 +39,9 @@
     <li>
       <a href="../articles/gene-level-test.html">Ancestry-stratified gene-level burden tests</a>
     </li>
+    <li>
+      <a href="../articles/complete-workflow.html">Complete LANTERN workflow: split → GDS → test → combine</a>
+    </li>
   </ul></li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -119,9 +122,17 @@
         <td><p>Subset VCF by genomic range</p></td>
       </tr></tbody><tbody><tr><th colspan="2">
           <h2 id="downstream-helpers">Downstream helpers <a href="#downstream-helpers" class="anchor" aria-hidden="true"></a></h2>
-          <p class="section-desc"></p><p>Helpers for preparing inputs to SMMAT gene-level tests.</p>
+          <p class="section-desc"></p><p>Helpers for writing GDS files and combining ancestry-specific p-values.</p>
         </th>
       </tr></tbody><tbody><tr><td>
+          <p><code><a href="write_dosage_gds.html">write_dosage_gds()</a></code> </p>
+        </td>
+        <td><p>Write an ancestry-specific dosage matrix to a SeqArray GDS file</p></td>
+      </tr><tr><td>
+          <p><code><a href="cauchy_combine.html">cauchy_combine()</a></code> </p>
+        </td>
+        <td><p>Cauchy combination test for multiple p-values</p></td>
+      </tr><tr><td>
           <p><code><a href="calc_gene_ancestry_weights.html">calc_gene_ancestry_weights()</a></code> </p>
         </td>
         <td><p>Calculate ancestry weights per gene</p></td>

@@ -2,6 +2,7 @@
 <url><loc>https://yuw444.github.io/LANTERN/404.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/AGENTS.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/LICENSE-text.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/articles/complete-workflow.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/articles/gene-level-test.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/articles/index.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/articles/multi-ancestry-splitting.html</loc></url>
@@ -9,6 +10,7 @@
 <url><loc>https://yuw444.github.io/LANTERN/authors.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/index.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/calc_gene_ancestry_weights.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/cauchy_combine.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/count_ancestry_codes.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/create_ancestry_vcfs.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_msp.html</loc></url>
@@ -23,6 +25,7 @@
 <url><loc>https://yuw444.github.io/LANTERN/reference/split_phased.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/split_phased_multi.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/subset_vcf_by_range.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/write_dosage_gds.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/write_vcf_with_ancestry.html</loc></url>
 </urlset>
 
