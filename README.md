@@ -160,7 +160,30 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 For the 2-ancestry case: pure African $\to p_a$, pure European $\to p_e$, Cauchy combination $\to p_c$.
 
 
-### 4. Pipeline
+### 4. R Package Installation
+
+The `lantern` R package is on GitHub. It has two categories of dependencies:
+
+- **Bioconductor R packages** — [SeqArray](https://bioconductor.org/packages/SeqArray/) and [SeqVarTools](https://bioconductor.org/packages/SeqVarTools/) are not on CRAN; `devtools::install_github()` will not find them automatically.
+- **System binary** — the phased-haplotype pipeline shells out to [`bcftools`](https://samtools.github.io/bcftools/) (≥ 1.10) for VCF reading and sample subsetting. Install it via your system package manager (`brew install bcftools` on macOS, `apt install bcftools` on Debian/Ubuntu) before using phased-mode functions.
+
+**Recommended installation** (handles Bioconductor dependencies):
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("yuw444/LANTERN/lantern")
+```
+
+**Alternative**: pre-install Bioconductor dependencies first, then use devtools:
+
+```r
+BiocManager::install(c("SeqArray", "SeqVarTools"))
+devtools::install_github("yuw444/LANTERN", subdir = "lantern")
+```
+
+### 5. Pipeline (legacy `./src`)
 
 * **Prerequiste**:
     * R > 4.3.3

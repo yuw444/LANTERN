@@ -163,8 +163,8 @@ split_phased_multi <- function(gt_hap0, gt_hap1, anc_hap0, anc_hap1,
   tract_df    <- tract_df[tract_order, ]
   rownames(tract_df) <- NULL
 
-  # Ancestry columns start at column 8 in data rows (7 metadata fields)
-  anc_values   <- data_mat[, 8:ncol(data_mat), drop = FALSE]
+  # Ancestry columns start at column 7 in data rows (6 metadata fields: chm spos epos sgpos egpos "n snps")
+  anc_values   <- data_mat[, 7:ncol(data_mat), drop = FALSE]
   n_tracts_orig <- nrow(tract_df)
   n_samples     <- length(sample_ids)
 
@@ -534,4 +534,297 @@ run_phased_pipeline <- function(vcf_path, msp_path, out_path,
                  tract_info   = tract_df,
                  overlap      = overlap,
                  vcf_paths    = vcf_paths))
+}
+
+# ============================================================================
+# run_combined_pipeline
+# ============================================================================
+
+#' Run phased and unphased ancestry splitting on the same BCF + MSP
+#'
+#' Parses the VCF/BCF and RFMix MSP file once, then runs both
+#' deterministic per-haplotype splitting (\code{\link{split_phased_multi}})
+#' and proportional diploid splitting
+#' (\code{\link{split_by_ancestry_multi}}).
+#' Works for any number of populations K \eqn{\ge} 2.
+#'
+#' @param vcf_path Path to a phased VCF or BCF file.
+#'   \code{bcftools} must be in \code{PATH}.
+#' @param msp_path Path to an RFMix MSP file (plain text or gzipped TSV).
+#' @param chrom Chromosome to process (e.g. \code{"chr19"} or \code{"19"}).
+#'   If \code{NULL}, all chromosomes present in the VCF are used.
+#' @param verbose Print step-by-step progress messages.
+#'
+#' @return Invisibly, a list with two named elements, \code{phased} and
+#'   \code{unphased}.  Each element is itself a list whose first K entries
+#'   are named dosage matrices (variants \eqn{\times} samples), one per
+#'   population in the order given by the MSP file (e.g. \code{$AFR},
+#'   \code{$EUR}).  Additional entries: \code{variant_info},
+#'   \code{sample_ids}, and \code{overlap}.
+#'
+#' @details
+#' Both splits share the same parsed MSP tracts and VCF genotypes.
+#' Diploid ancestry codes are generated automatically from the MSP
+#' population codes: pure-ancestry codes are 1 \ldots K (one per
+#' population) and mixed-ancestry codes are K+1 \ldots K+M where
+#' M = K(K-1)/2 enumerates all unordered pairs.
+#' Monomorphic variants are filtered independently in each mode.
+#'
+#' @examples
+#' \dontrun{
+#' res <- run_combined_pipeline(
+#'   vcf_path = "data/chr19.phased.bcf",
+#'   msp_path = "data/chr19.msp.tsv.gz",
+#'   chrom    = "chr19"
+#' )
+#' res$phased$AFR    # deterministic AFR dosage matrix
+#' res$unphased$AFR  # proportional AFR dosage matrix
+#' }
+#'
+#' @export
+run_combined_pipeline <- function(vcf_path, msp_path, chrom = NULL,
+                                   verbose = TRUE) {
+
+  if (verbose) message("=== LANTERN Combined Ancestry Pipeline ===\n")
+
+  # ---- Step 1: Parse MSP ----
+  if (verbose) message("Step 1: Parsing RFMix MSP file...")
+  msp_data     <- .parse_msp(msp_path, verbose = verbose)
+  msp_samples  <- msp_data$sample_ids
+  tract_df     <- msp_data$tract_df
+  anc_hap0_mat <- msp_data$anc_hap0
+  anc_hap1_mat <- msp_data$anc_hap1
+  pop_codes    <- msp_data$pop_codes
+  n_tracts     <- nrow(tract_df)
+  K            <- length(pop_codes)
+  if (K < 2)
+    stop("run_combined_pipeline requires at least 2 populations in the MSP")
+  if (verbose) message("  MSP samples: ", length(msp_samples),
+                       "  Tracts: ", n_tracts, "  Populations: ", K)
+
+  # ---- Step 2: VCF sample IDs ----
+  if (verbose) message("\nStep 2: Querying VCF sample IDs...")
+  vcf_samples <- tryCatch({
+    res <- system(paste0("bcftools query -l ", shQuote(vcf_path)),
+                  intern = TRUE, ignore.stderr = TRUE)
+    if (length(res) == 0) stop("bcftools query -l returned nothing")
+    res
+  }, error = function(e) stop("Could not read VCF sample IDs: ", e$message))
+  if (verbose) message("  VCF samples: ", length(vcf_samples))
+
+  # ---- Step 3: Intersect samples ----
+  if (verbose) message("\nStep 3: Intersecting samples...")
+  common_samples <- intersect(vcf_samples, msp_samples)
+  if (length(common_samples) == 0)
+    stop("No common samples between VCF and MSP")
+  dropped_vcf <- setdiff(vcf_samples, common_samples)
+  dropped_msp <- setdiff(msp_samples, common_samples)
+  if (verbose) message("  Common: ", length(common_samples))
+
+  anc_hap0_common <- anc_hap0_mat[common_samples, , drop = FALSE]
+  anc_hap1_common <- anc_hap1_mat[common_samples, , drop = FALSE]
+
+  # ---- Step 4: Parse VCF GT ----
+  if (verbose) message("\nStep 4: Parsing VCF genotypes...")
+  cmd_gt <- paste0(
+    "bcftools query -f '%CHROM\\t%POS\\t%REF\\t%ALT[\\t%GT]\\n' ",
+    shQuote(vcf_path))
+  gt_output <- tryCatch(
+    system(cmd_gt, intern = TRUE, ignore.stderr = TRUE),
+    error = function(e) stop("bcftools query failed: ", e$message))
+  if (length(gt_output) == 0) stop("bcftools query returned no variants")
+  if (verbose) message("  ", length(gt_output), " variant lines read")
+
+  tmp_gt <- tempfile(fileext = ".tsv")
+  on.exit(unlink(tmp_gt), add = TRUE)
+  writeLines(gt_output, tmp_gt)
+  gt_dt <- data.table::fread(tmp_gt, header = FALSE, sep = "\t")
+
+  vcf_chrom <- gt_dt[[1]]
+  vcf_pos   <- as.integer(gt_dt[[2]])
+  vcf_ref   <- as.character(gt_dt[[3]])
+  vcf_alt   <- as.character(gt_dt[[4]])
+
+  is_biallelic <- !grepl(",", vcf_alt, fixed = TRUE)
+  n_multi <- sum(!is_biallelic)
+  if (n_multi > 0) {
+    if (verbose) message("  Skipping ", n_multi, " multiallelic variants")
+    vcf_chrom <- vcf_chrom[is_biallelic]; vcf_pos <- vcf_pos[is_biallelic]
+    vcf_ref   <- vcf_ref[is_biallelic];   vcf_alt <- vcf_alt[is_biallelic]
+    gt_dt     <- gt_dt[is_biallelic]
+  }
+  n_variants <- length(vcf_pos)
+
+  sample_idx <- match(common_samples, vcf_samples)
+  gt_mat_raw <- as.matrix(gt_dt[, 5:ncol(gt_dt), drop = FALSE])
+  gt_mat     <- gt_mat_raw[, sample_idx, drop = FALSE]
+
+  gt_parsed   <- .parse_phased_gt_matrix(gt_mat, n_variants,
+                                          length(common_samples),
+                                          common_samples, verbose = verbose)
+  gt_hap0_mat <- gt_parsed$hap0
+  gt_hap1_mat <- gt_parsed$hap1
+
+  n_missing <- sum(gt_parsed$missing)
+  if (n_missing > 0 && verbose)
+    message("  Missing GT: ", n_missing, " (treated as 0/0)")
+
+  # ---- Step 5: Map variants to tracts ----
+  if (verbose) message("\nStep 5: Mapping variants to ancestry tracts...")
+  vcf_chrom_clean   <- sub("^chr", "", vcf_chrom)
+  tract_chrom_clean <- sub("^chr", "", tract_df$chrom)
+
+  if (!is.null(chrom)) {
+    chrom_clean <- sub("^chr", "", chrom)
+    keep <- vcf_chrom_clean == chrom_clean
+    if (!any(keep)) stop("No variants on chromosome ", chrom)
+    vcf_chrom <- vcf_chrom[keep]; vcf_pos <- vcf_pos[keep]
+    vcf_ref   <- vcf_ref[keep];   vcf_alt <- vcf_alt[keep]
+    gt_hap0_mat <- gt_hap0_mat[keep, , drop = FALSE]
+    gt_hap1_mat <- gt_hap1_mat[keep, , drop = FALSE]
+    vcf_chrom_clean <- vcf_chrom_clean[keep]
+    n_variants <- sum(keep)
+    if (verbose) message("  Filtered to chrom ", chrom, ": ", n_variants,
+                         " variants")
+  }
+
+  tract_idx   <- findInterval(vcf_pos, tract_df$spos)
+  valid_tract <- tract_idx > 0
+  if (any(valid_tract))
+    valid_tract[valid_tract] <-
+      vcf_pos[valid_tract] <= tract_df$epos[tract_idx[valid_tract]]
+  valid_chrom <- if (!is.null(chrom)) {
+    rep(TRUE, length(tract_idx))
+  } else {
+    vapply(seq_along(tract_idx), function(i) {
+      tract_idx[i] > 0 &&
+        vcf_chrom_clean[i] == tract_chrom_clean[tract_idx[i]]
+    }, logical(1))
+  }
+  keep_var   <- valid_tract & valid_chrom
+  n_no_tract <- sum(!keep_var)
+  if (n_no_tract > 0 && verbose)
+    message("  Variants with no tract: ", n_no_tract, " (dropped)")
+
+  if (n_no_tract > 0) {
+    vcf_chrom   <- vcf_chrom[keep_var]; vcf_pos <- vcf_pos[keep_var]
+    vcf_ref     <- vcf_ref[keep_var];   vcf_alt <- vcf_alt[keep_var]
+    gt_hap0_mat <- gt_hap0_mat[keep_var, , drop = FALSE]
+    gt_hap1_mat <- gt_hap1_mat[keep_var, , drop = FALSE]
+    tract_idx   <- tract_idx[keep_var]
+    n_variants  <- sum(keep_var)
+  }
+  if (n_variants == 0) stop("No variants with valid ancestry tracts")
+
+  # ---- Step 6: Broadcast tract ancestry to variants ----
+  if (verbose) message("\nStep 6: Broadcasting ancestry to variants...")
+  anc_hap0_var <- matrix(0L, nrow = n_variants, ncol = length(common_samples))
+  anc_hap1_var <- matrix(0L, nrow = n_variants, ncol = length(common_samples))
+  for (i in seq_len(n_variants)) {
+    t <- tract_idx[i]
+    anc_hap0_var[i, ] <- anc_hap0_common[, t]
+    anc_hap1_var[i, ] <- anc_hap1_common[, t]
+  }
+
+  # shared overlap stats (independent of split mode)
+  overlap_base <- list(
+    n_vcf_samples           = length(vcf_samples),
+    n_msp_samples           = length(msp_samples),
+    n_common                = length(common_samples),
+    n_multiallelic_filtered = n_multi,
+    n_no_tract              = n_no_tract,
+    dropped_samples_vcf     = dropped_vcf,
+    dropped_samples_msp     = dropped_msp
+  )
+
+  # ---- Auto-generate diploid ancestry codes for K populations ----
+  # pure_codes_named: pop_name -> unique diploid code 1..K (pop index)
+  # mixed_codes_df : data.frame(code, pop1, pop2) for all K*(K-1)/2 pairs
+  # lookup[p0_idx, p1_idx] -> diploid code  (vectorised ancestry conversion)
+  pop_names        <- names(pop_codes)
+  hap_codes_v      <- as.integer(pop_codes)
+  pure_codes_named <- setNames(seq_len(K), pop_names)
+  pairs_mat        <- combn(K, 2)          # 2 × M
+  M                <- ncol(pairs_mat)
+  mixed_code_v     <- K + seq_len(M)
+  mixed_codes_df   <- data.frame(
+    code = as.integer(mixed_code_v),
+    pop1 = pop_names[pairs_mat[1L, ]],
+    pop2 = pop_names[pairs_mat[2L, ]],
+    stringsAsFactors = FALSE
+  )
+  lookup <- matrix(0L, nrow = K, ncol = K)
+  diag(lookup) <- seq_len(K)
+  for (m in seq_len(M)) {
+    i <- pairs_mat[1L, m]; j <- pairs_mat[2L, m]
+    lookup[i, j] <- mixed_code_v[m]
+    lookup[j, i] <- mixed_code_v[m]
+  }
+
+  # ---- Step 7a: Phased split (works for any K) ----
+  if (verbose) message("\nStep 7a: Splitting haplotypes by ancestry (phased)...")
+  res_ph <- split_phased_multi(gt_hap0_mat, gt_hap1_mat,
+                                anc_hap0_var, anc_hap1_var,
+                                pop_codes = pop_codes)
+  # res_ph: named list of K matrices (variants × samples)
+
+  total_ph   <- Reduce("+", res_ph)
+  has_alt_ph <- rowSums(total_ph) > 0
+  n_mono_ph  <- sum(!has_alt_ph)
+  res_ph_f   <- lapply(res_ph, function(m) m[has_alt_ph, , drop = FALSE])
+  vi_ph      <- data.frame(chrom = vcf_chrom[has_alt_ph],
+                            pos   = vcf_pos[has_alt_ph],
+                            ref   = vcf_ref[has_alt_ph],
+                            alt   = vcf_alt[has_alt_ph],
+                            stringsAsFactors = FALSE)
+  if (verbose) message("  Phased: ", nrow(vi_ph), " variants kept (",
+                       n_mono_ph, " monomorphic filtered)")
+
+  # ---- Step 7b: Unphased split (works for any K) ----
+  if (verbose) message("\nStep 7b: Splitting diploid dosages by ancestry (unphased)...")
+
+  gt_diploid <- gt_hap0_mat + gt_hap1_mat
+
+  # Convert per-haplotype codes to 1..K pop indices, then look up diploid code
+  p0_mat      <- matrix(match(as.vector(anc_hap0_var), hap_codes_v),
+                        nrow = n_variants, ncol = length(common_samples))
+  p1_mat      <- matrix(match(as.vector(anc_hap1_var), hap_codes_v),
+                        nrow = n_variants, ncol = length(common_samples))
+  anc_diploid <- matrix(lookup[cbind(as.vector(p0_mat), as.vector(p1_mat))],
+                        nrow = n_variants, ncol = length(common_samples))
+
+  res_un <- split_by_ancestry_multi(gt_diploid, anc_diploid,
+                                     pure_codes_named, mixed_codes_df)
+  # res_un: named list of K matrices (variants × samples)
+
+  total_un   <- Reduce("+", res_un)
+  has_alt_un <- rowSums(total_un) > 0
+  n_mono_un  <- sum(!has_alt_un)
+  res_un_f   <- lapply(res_un, function(m) m[has_alt_un, , drop = FALSE])
+  vi_un      <- data.frame(chrom = vcf_chrom[has_alt_un],
+                            pos   = vcf_pos[has_alt_un],
+                            ref   = vcf_ref[has_alt_un],
+                            alt   = vcf_alt[has_alt_un],
+                            stringsAsFactors = FALSE)
+  if (verbose) message("  Unphased: ", nrow(vi_un), " variants kept (",
+                       n_mono_un, " monomorphic filtered)")
+
+  if (verbose) message("\n=== Pipeline Complete ===\n")
+
+  invisible(list(
+    phased   = c(res_ph_f, list(
+      variant_info = vi_ph,
+      sample_ids   = common_samples,
+      overlap      = c(overlap_base,
+                       n_variants_kept        = nrow(vi_ph),
+                       n_monomorphic_filtered = n_mono_ph)
+    )),
+    unphased = c(res_un_f, list(
+      variant_info = vi_un,
+      sample_ids   = common_samples,
+      overlap      = c(overlap_base,
+                       n_variants_kept        = nrow(vi_un),
+                       n_monomorphic_filtered = n_mono_un)
+    ))
+  ))
 }

@@ -213,34 +213,228 @@ otherwise.  Same for hap1.
 9. Optionally write ancestry-specific VCFs with a DS (dosage) field
    and convert them to GDS format.
 
-```{r phased-pipeline, eval=FALSE}
-# Requires bcftools in PATH and real phased VCF + MSP files
-result <- run_phased_pipeline(
-  vcf_path = "data/chr19.phased.bcf",
-  msp_path = "data/chr19.msp.tsv.gz",
-  out_path  = "output/phased/",
-  chrom     = "chr19",
-  write_vcf = TRUE,
-  verbose   = TRUE
-)
+```{r phased-pipeline-setup}
+# Build minimal synthetic VCF and MSP in a temp directory
+tmp_dir  <- tempfile()
+dir.create(tmp_dir)
+vcf_path <- file.path(tmp_dir, "phased.vcf")
+msp_path <- file.path(tmp_dir, "ancestry.msp.tsv")
+out_path <- file.path(tmp_dir, "out")
 
-# result$african  — dosage matrix, rows=variants, cols=samples
-# result$european — dosage matrix
-# result$variant_info — data.frame: chrom, pos, ref, alt
-# result$vcf_paths    — paths to african_ds.vcf, european_ds.vcf, *.gds
+# 3 variants × 3 samples, phased GTs
+writeLines(c(
+  "##fileformat=VCFv4.1",
+  '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+  paste(c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO",
+          "FORMAT","S1","S2","S3"), collapse = "\t"),
+  paste(c("19","1100",".","A","G","100","PASS",".","GT","0|1","1|0","0|0"), collapse = "\t"),
+  paste(c("19","1200",".","C","T","100","PASS",".","GT","1|1","0|1","1|0"), collapse = "\t"),
+  paste(c("19","2100",".","G","A","100","PASS",".","GT","0|0","1|0","0|1"), collapse = "\t")
+), vcf_path)
+
+# RFMix MSP: 2 ancestry tracts, pop codes AFR=0 EUR=1
+#   tract 1 [1000,2000): S1=AFR|EUR  S2=EUR|AFR  S3=AFR|EUR
+#   tract 2 [2000,3000): S1=EUR|AFR  S2=AFR|EUR  S3=EUR|AFR
+writeLines(c(
+  paste(c("#Subpopulation order/codes: AFR=0", "EUR=1"), collapse = "\t"),
+  paste(c("#chm","spos","epos","sgpos","egpos","n snps",
+          "S1.0","S1.1","S2.0","S2.1","S3.0","S3.1"), collapse = "\t"),
+  paste(c("19","1000","2000","0.0","0.1","2","0","1","1","0","0","1"), collapse = "\t"),
+  paste(c("19","2000","3000","0.1","0.2","1","1","0","0","1","1","0"), collapse = "\t")
+), msp_path)
 ```
 
-The output `african_ds.gds` / `european_ds.gds` files are the primary
-input for the downstream gene-level tests (see `vignette("gene-level-test")`).
+```{r phased-pipeline}
+result <- run_phased_pipeline(
+  vcf_path  = vcf_path,
+  msp_path  = msp_path,
+  out_path  = out_path,
+  write_vcf = FALSE,
+  verbose   = FALSE
+)
+
+cat("African dosage (variants × samples):\n")
+print(result$african)
+
+cat("\nEuropean dosage:\n")
+print(result$european)
+
+cat("\nVariant info:\n")
+print(result$variant_info)
+
+# Sanity check: AFR + EUR == hap0 + hap1 everywhere
+vcf_lines <- readLines(vcf_path)[-(1:3)]
+raw <- do.call(rbind, lapply(vcf_lines, function(l) {
+  gts <- strsplit(l, "\t")[[1]][10:12]
+  vapply(gts, function(g) sum(as.integer(strsplit(g, "|", fixed=TRUE)[[1]])), integer(1))
+}))
+max_err <- max(abs((result$african + result$european) - raw))
+cat("\nMax reconstruction error (must be 0):", max_err, "\n")
+```
+
+The output matrices have rows = variants and columns = samples.  With
+`write_vcf = FALSE` no files are written; set it to `TRUE` (and provide a
+real BCF path) to also produce `african_ds.gds` / `european_ds.gds` for the
+downstream gene-level tests (see `vignette("gene-level-test")`).
+
+The same call on a real cohort BCF + MSP (JHS chr19, 3313 samples, ~44 k
+variants — runs when the raw data files are present):
+
+```{r phased-pipeline-real, eval=file.exists("../../raw/LANTERN.phased.bcf")}
+real_result <- run_phased_pipeline(
+  vcf_path  = "../../raw/LANTERN.phased.bcf",
+  msp_path  = "../../raw/LANTERN_chr19.msp.tsv.gz",
+  out_path  = tempfile(),
+  chrom     = "chr19",
+  write_vcf = FALSE,
+  verbose   = FALSE
+)
+
+cat("Variants kept:", nrow(real_result$african), "\n")
+cat("Samples:      ", ncol(real_result$african), "\n")
+cat("Monomorphic filtered:", real_result$overlap$n_monomorphic_filtered, "\n")
+cat("First 3 variants:\n")
+print(head(real_result$variant_info, 3))
+
+# Sanity checks
+cat("Min dosage (must be >= 0):", min(real_result$african, real_result$european), "\n")
+cat("Max AFR dosage (must be <= 2):", max(real_result$african), "\n")
+cat("Max EUR dosage (must be <= 2):", max(real_result$european), "\n")
+```
 
 ---
 
-## 3  Choosing between unphased and phased
+## 3  Combined pipeline (`run_combined_pipeline`)
 
-| | Unphased | Phased |
-|---|---|---|
-| **Ancestry input** | Diploid per-variant code (1/2/3) | Per-haplotype code from RFMix MSP |
-| **Splitting rule** | Probabilistic (p1/p2 proportions) | Deterministic |
-| **Accuracy** | Good for intermediate-frequency variants | Better for rare variants |
-| **Required tools** | None (pure R + C) | `bcftools` for VCF parsing |
-| **Recommended for** | Unphased cohort data | Phased TOPMed/1000G data |
+When you have a phased BCF and an RFMix MSP and want **both** phased and
+unphased dosage estimates in one call, `run_combined_pipeline()` is the
+single-function shortcut.  It parses the VCF and MSP once and returns a
+named list with two elements, `$phased` and `$unphased`, each containing
+`african`, `european`, `variant_info`, `sample_ids`, and `overlap`.
+
+The synthetic VCF and MSP created above are still in scope.  The return
+value is a named list: `$phased` and `$unphased`, each containing one
+matrix per population (named by the MSP population labels) plus
+`variant_info`, `sample_ids`, and `overlap`.
+
+```{r combined-pipeline-synthetic}
+combined <- run_combined_pipeline(
+  vcf_path = vcf_path,
+  msp_path = msp_path,
+  verbose  = FALSE
+)
+
+# Population names come directly from the MSP header
+pop_names <- setdiff(names(combined$phased),
+                     c("variant_info", "sample_ids", "overlap"))
+cat("Populations:", paste(pop_names, collapse = ", "), "\n\n")
+
+cat("=== $phased ===\n")
+for (p in pop_names) {
+  cat(p, "dosage:\n"); print(combined$phased[[p]])
+}
+
+cat("\n=== $unphased ===\n")
+for (p in pop_names) {
+  cat(p, "dosage:\n"); print(combined$unphased[[p]])
+}
+
+cat("\nVariants in both modes:", nrow(combined$phased$variant_info), "\n")
+cat("Samples:               ", length(combined$phased$sample_ids), "\n")
+```
+
+### 3.1  Three-population example
+
+The same function works unchanged for K > 2.  Here we add a Native
+American (NAT) population:
+
+```{r combined-pipeline-3pop}
+vcf3 <- file.path(tmp_dir, "phased3.vcf")
+msp3 <- file.path(tmp_dir, "ancestry3.msp.tsv")
+
+writeLines(c(
+  "##fileformat=VCFv4.1",
+  '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+  paste(c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO",
+          "FORMAT","S1","S2","S3"), collapse="\t"),
+  paste(c("19","1500",".","A","G","100","PASS",".","GT","1|0","0|1","1|1"),
+        collapse="\t"),
+  paste(c("19","2500",".","C","T","100","PASS",".","GT","0|0","1|0","0|1"),
+        collapse="\t")
+), vcf3)
+
+# Three populations: AFR=0, EUR=1, NAT=2
+writeLines(c(
+  paste(c("#Subpopulation order/codes: AFR=0", "EUR=1", "NAT=2"),
+        collapse="\t"),
+  paste(c("#chm","spos","epos","sgpos","egpos","n snps",
+          "S1.0","S1.1","S2.0","S2.1","S3.0","S3.1"), collapse="\t"),
+  # tract 1 [1000,2000): S1=AFR|EUR  S2=EUR|NAT  S3=AFR|NAT
+  paste(c("19","1000","2000","0.0","0.1","1","0","1","1","2","0","2"),
+        collapse="\t"),
+  # tract 2 [2000,3000): S1=EUR|AFR  S2=AFR|EUR  S3=NAT|EUR
+  paste(c("19","2000","3000","0.1","0.2","1","1","0","0","1","2","1"),
+        collapse="\t")
+), msp3)
+
+combined3 <- run_combined_pipeline(vcf3, msp3, verbose = FALSE)
+
+pop3 <- setdiff(names(combined3$phased),
+                c("variant_info", "sample_ids", "overlap"))
+cat("Populations:", paste(pop3, collapse = ", "), "\n\n")
+
+cat("=== Phased dosages ===\n")
+for (p in pop3) { cat(p, ":\n"); print(combined3$phased[[p]]) }
+
+cat("\n=== Unphased dosages ===\n")
+for (p in pop3) { cat(p, ":\n"); print(combined3$unphased[[p]]) }
+```
+
+The phased and unphased matrices share the same variant set here because
+no extra variants become monomorphic under one mode but not the other.
+For rare-variant-rich real cohorts the two `variant_info` frames may
+differ by a handful of rows.
+
+On the real JHS chr19 cohort (runs when raw files are present):
+
+```{r combined-pipeline-real, eval=file.exists("../../raw/LANTERN.phased.bcf")}
+combined_real <- run_combined_pipeline(
+  vcf_path = "../../raw/LANTERN.phased.bcf",
+  msp_path = "../../raw/LANTERN_chr19.msp.tsv.gz",
+  chrom    = "chr19",
+  verbose  = FALSE
+)
+
+pop_r <- setdiff(names(combined_real$phased),
+                 c("variant_info", "sample_ids", "overlap"))
+
+cat("=== Phased ===\n")
+cat("Variants x samples:",
+    nrow(combined_real$phased$variant_info), "x",
+    length(combined_real$phased$sample_ids), "\n")
+for (p in pop_r)
+  cat(p, "total dosage:", round(sum(combined_real$phased[[p]]), 1), "\n")
+
+cat("\n=== Unphased ===\n")
+cat("Variants x samples:",
+    nrow(combined_real$unphased$variant_info), "x",
+    length(combined_real$unphased$sample_ids), "\n")
+for (p in pop_r)
+  cat(p, "total dosage:", round(sum(combined_real$unphased[[p]]), 1), "\n")
+
+cat("\nNote: totals differ slightly because phased assigns alleles\n",
+    "deterministically while unphased uses proportional splitting\n",
+    "for ambiguous mixed heterozygotes.\n")
+```
+
+---
+
+## 4  Choosing between unphased and phased
+
+| | Unphased | Phased | Combined |
+|---|---|---|---|
+| **Ancestry input** | Diploid per-variant code (1/2/3) | Per-haplotype code from RFMix MSP | RFMix MSP (both derived automatically) |
+| **Splitting rule** | Probabilistic (p1/p2 proportions) | Deterministic | Both |
+| **Accuracy** | Good for intermediate-frequency variants | Better for rare variants | Side-by-side comparison |
+| **Required tools** | None (pure R + C) | `bcftools` | `bcftools` |
+| **Key function** | `run_ancestry_pipeline()` | `run_phased_pipeline()` | `run_combined_pipeline()` |
