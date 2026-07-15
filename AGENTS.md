@@ -11,7 +11,7 @@ R/C package for **ancestry-specific rare variant association analysis** (AFR vs 
 │   ├── NAMESPACE                  # roxygen-generated, useDynLib(lantern)
 │   ├── R/
 │   │   ├── lantern.R              # C wrappers + exported count_/split_/write_/subset_
-│   │   └── workflow.R             # run_ancestry_pipeline() (overlap handling, VCF I/O)
+│   │   └── workflow.R             # ancestry_split_dosage() (overlap handling, VCF I/O)
 │   ├── src/
 │   │   ├── ancestry.c             # C backend (split_by_ancestry, count_ancestry_codes)
 │   │   ├── ancestry.h             # C function declarations
@@ -19,7 +19,7 @@ R/C package for **ancestry-specific rare variant association analysis** (AFR vs 
 │   │   └── Makevars               # PKG_CFLAGS = -O3 -march=native -Wall
 │   └── tests/testthat/
 │       ├── test-functions.R       # Tests for count_ancestry_codes, split_by_ancestry
-│       └── test-workflow.R        # Tests for run_ancestry_pipeline (overlap, monomorphic)
+│       └── test-workflow.R        # Tests for ancestry_split_dosage (overlap, monomorphic)
 ├── src/                           # Original standalone R pipeline (legacy)
 │   ├── step1_vcf_split_by_ancestry.R    # VCF → AA/EE GDS + DS annotation
 │   ├── step2_association_detection.R    # GMMAT burden tests via SMMAT
@@ -88,7 +88,7 @@ C build flags: `-O3 -march=native -Wall` (see `lantern/src/Makevars`). Compiles 
 ```bash
 ./download_1000g.sh                          # ~250 MB; chr22 only
 Rscript prepare_1000g.R                      # builds simulated PT matrix
-Rscript test_lantern_full.R                  # exercises count_/split_/run_ancestry_pipeline
+Rscript test_lantern_full.R                  # exercises count_/split_/ancestry_split_dosage
 ```
 
 AFR pops: `YRI,LWK,MSL,GWD,ESN,ACB,ASW`. EUR pops: `CEU,TSI,FIN,GBR,IBS`. PT matrix in `test/data/1000g/subset/pt_matrix.tsv` is **synthetic** (random ancestry flip, seed=42, 15% admixed) — not real local-ancestry inference.
@@ -124,7 +124,7 @@ External tools required by step 1: `bcftools`, `bgzip`, `tabix`. Step 2 requires
 ## CONVENTIONS
 
 - **Ancestry codes**: integer 1/2/3 in R; same in C (`int` comparisons). Do not use strings or factor levels.
-- **PT matrix orientation**: rows = samples, cols = variants/regions. GT matrix is the opposite (rows = variants). `run_ancestry_pipeline` handles this internally.
+- **PT matrix orientation**: rows = samples, cols = variants/regions. GT matrix is the opposite (rows = variants). `ancestry_split_dosage` handles this internally.
 - **Output Rds**: step 2 writes `list(aa=..., ee=..., observed=...)` — three GMMAT/SMMAT results.
 - **C entry points** (must agree across `init.c`, `ancestry.h`, and `ancestry.c`): `count_ancestry_codes_C`, `split_by_ancestry_C`, `read_bed_file_C`, `write_vcf_with_ancestry_C`, `subset_vcf_by_range_C`. **Header mismatch**: `ancestry.h` declares `read_ancestry_plink`/`read_pt_matrix`/`write_ancestry_vcf` but `init.c` registers different names (`read_bed_file`/`write_vcf_with_ancestry`/`subset_vcf_by_range`). The C source implements the init.c names; the header is out of sync. Only `count_ancestry_codes` and `split_by_ancestry` are wrapped/exported from R.
 - **Hardcoded absolute paths**: `src/step1_vcf_split_by_ancestry.R` defaults all `--bed/--bim/--fam/--vcf_path/--out_path` to `/scratch/g/pauer/Yu/smmat/...` (wrong machine). Always pass explicit args via CLI.
@@ -136,7 +136,7 @@ External tools required by step 1: `bcftools`, `bgzip`, `tabix`. Step 2 requires
 - **Step 1 defaults are wrong for any machine other than the original.** Always pass `--bed/--bim/--fam/--vcf_path/--out_path/--chr_id` explicitly.
 - **R and C implementations of split diverge slightly** (the `* 0.9999` factor). If you change one, change the other; tests live in C only.
 - **Hardcoded email in SLURM scripts**: `ywang@mcw.edu`. Update before sharing runs.
-- **monomorphic variants**: step 1 in R drops them; the C package's `run_ancestry_pipeline` also filters (returns `n_monomorphic_filtered` in overlap). Don't try to "fix" a 0-row output by suppressing the filter.
+- **monomorphic variants**: step 1 in R drops them; the C package's `ancestry_split_dosage` also filters (returns `n_monomorphic_filtered` in overlap). Don't try to "fix" a 0-row output by suppressing the filter.
 
 ## DEPENDENCIES
 

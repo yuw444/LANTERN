@@ -52,8 +52,8 @@ cat("   Mixed ancestry (code 2):\n")
 cat("     Mean:", round(mean(mixed_counts), 1), "variants/sample\n")
 cat("     Range:", min(mixed_counts), "-", max(mixed_counts), "\n\n")
 
-# 5. Test split_by_ancestry
-cat("5. Testing split_by_ancestry()...\n")
+# 5. Test split_diploid
+cat("5. Testing split_diploid()...\n")
 
 # Convert VCF genotypes to integer matrix (for testing)
 gt_int <- apply(gt, 2, function(x) {
@@ -69,7 +69,7 @@ gt_subset <- gt_int[, 1:n_test, drop = FALSE]
 pt_subset <- pt_mat[, 1:n_test, drop = FALSE]
 
 cat("   Testing with", nrow(gt_subset), "samples x", ncol(gt_subset), "variants\n")
-result <- split_by_ancestry(gt_subset, pt_subset)
+result <- split_diploid(gt_subset, pt_subset)
 
 cat("   African dosage matrix:", nrow(result$african), "x", ncol(result$african), "\n")
 cat("   European dosage matrix:", nrow(result$european), "x", ncol(result$european), "\n")

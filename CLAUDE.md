@@ -36,7 +36,7 @@ LANTERN splits genotype dosages by inferred local ancestry (African vs European)
 ```
 lantern/          R package (the target product)
   R/lantern.R     exported R wrappers; calls C via .Call()
-  R/workflow.R    high-level run_ancestry_pipeline()
+  R/workflow.R    high-level ancestry_split_dosage()
   src/ancestry.c  ALL core algorithms: p1/p2 split, phased split, bed reader, vcf writer
   src/init.c      .Call registration — must stay in sync with ancestry.h
 src/              legacy standalone pipeline (pre-package, kept for reference)
@@ -66,7 +66,7 @@ Singleton edge case (only mixed hets carry alt allele): `p1 = p2 = 0.5`. Impleme
 ## Key Conventions
 
 - Ancestry codes are always integers 1/2/3 (never strings or factors).
-- PT matrix shape: rows=samples, cols=variants. GT matrix shape: rows=variants, cols=samples. `run_ancestry_pipeline()` handles the transpose.
+- PT matrix shape: rows=samples, cols=variants. GT matrix shape: rows=variants, cols=samples. `ancestry_split_dosage()` handles the transpose.
 - New C entry points must be registered in both `init.c` AND declared in `ancestry.h`.
 - After editing `lantern/R/lantern.R` exported functions, re-run roxygen: `pixi run Rscript -e 'devtools::document("lantern")'`
 
