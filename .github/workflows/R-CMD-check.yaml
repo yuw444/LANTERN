@@ -34,17 +34,23 @@ jobs:
             libcurl4-openssl-dev libssl-dev libxml2-dev \
             libhdf5-dev libbz2-dev liblzma-dev bcftools
 
-      # Install all DESCRIPTION deps + Bioc packages.
-      # bioc:: prefix tells setup-r-dependencies to use BiocManager;
-      # it auto-selects the Bioc version that matches the installed R.
+      # pak (via setup-r-dependencies below) intermittently fails to install
+      # Rhtslib after building it from source ("Failed to install binary
+      # package Rhtslib") — a known upstream pak issue. Installing
+      # SeqArray/SeqVarTools with BiocManager first (plain install.packages(),
+      # no pak) avoids that code path; pak then sees them already satisfied.
+      - name: Install Bioconductor dependencies
+        run: |
+          Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
+          Rscript -e 'BiocManager::install(c("SeqArray", "SeqVarTools"), ask = FALSE, update = FALSE)'
+
+      # Install remaining DESCRIPTION deps.
       # GMMAT is in Suggests but all its chunks are eval=FALSE, so it is
       # not required for the check to pass.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: lantern
           extra-packages: |
-            bioc::SeqArray
-            bioc::SeqVarTools
             any::knitr
             any::rmarkdown
             any::rcmdcheck

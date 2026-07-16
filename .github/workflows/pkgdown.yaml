@@ -37,12 +37,20 @@ jobs:
             libcurl4-openssl-dev libssl-dev libxml2-dev \
             libhdf5-dev libbz2-dev liblzma-dev bcftools
 
+      # pak (via setup-r-dependencies below) intermittently fails to install
+      # Rhtslib after building it from source ("Failed to install binary
+      # package Rhtslib") — a known upstream pak issue. Installing
+      # SeqArray/SeqVarTools with BiocManager first (plain install.packages(),
+      # no pak) avoids that code path; pak then sees them already satisfied.
+      - name: Install Bioconductor dependencies
+        run: |
+          Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
+          Rscript -e 'BiocManager::install(c("SeqArray", "SeqVarTools"), ask = FALSE, update = FALSE)'
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: lantern
           extra-packages: |
-            bioc::SeqArray
-            bioc::SeqVarTools
             any::pkgdown
             any::knitr
             any::rmarkdown
