@@ -189,9 +189,9 @@ code matrix, then call the LANTERN C backend.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"EUR dosage: "</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">ds_eur</span><span class="op">)</span>, <span class="st">"variants ×"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">ds_eur</span><span class="op">)</span>, <span class="st">"samples\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; EUR dosage:  18 variants × 60 samples</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"AFR mean per-variant dosage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ds_afr</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; AFR mean per-variant dosage: 0.0513</span></span>
+<span><span class="co">#&gt; AFR mean per-variant dosage: 0.0511</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"EUR mean per-variant dosage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ds_eur</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; EUR mean per-variant dosage: 0.064</span></span></code></pre></div>
+<span><span class="co">#&gt; EUR mean per-variant dosage: 0.0637</span></span></code></pre></div>
 <hr>
 </div>
 </div>
@@ -224,8 +224,8 @@ VCFs.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"GDS files created:\n"</span>, <span class="va">gds_afr</span>, <span class="st">"\n"</span>, <span class="va">gds_eur</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; GDS files created:</span></span>
-<span><span class="co">#&gt;  /tmp/Rtmp7DUIhi/file43287c33ab5d.gds </span></span>
-<span><span class="co">#&gt;  /tmp/Rtmp7DUIhi/file4328d1e01c1.gds</span></span></code></pre></div>
+<span><span class="co">#&gt;  /tmp/RtmpgyVT8e/file4322559387f3.gds </span></span>
+<span><span class="co">#&gt;  /tmp/RtmpgyVT8e/file43225df1a643.gds</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -378,7 +378,7 @@ workflow.</p>
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Yu Wang.</p>
+<p>Developed by Yu Wang, Bjoernar Tuftin, Paul Auer.</p>
 </div>
 
 <div class="pkgdown">
