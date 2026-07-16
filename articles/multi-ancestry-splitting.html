@@ -90,7 +90,7 @@
 populations)</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/package/vignettes/multi-ancestry-splitting.Rmd" class="external-link"><code>vignettes/multi-ancestry-splitting.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/vignettes/multi-ancestry-splitting.Rmd" class="external-link"><code>vignettes/multi-ancestry-splitting.Rmd</code></a></small>
       <div class="hidden name"><code>multi-ancestry-splitting.Rmd</code></div>
 
     </div>
@@ -122,13 +122,13 @@ two-population assumption is too restrictive.</p>
 <tbody>
 <tr class="odd">
 <td><strong>Unphased</strong></td>
-<td><code><a href="../reference/split_by_ancestry_multi.html">split_by_ancestry_multi()</a></code></td>
+<td><code><a href="../reference/split_diploid_multi.html">split_diploid_multi()</a></code></td>
 <td>GT matrix + diploid code matrix</td>
 <td>Proportional (p1 … pK estimated per variant)</td>
 </tr>
 <tr class="even">
 <td><strong>Phased</strong></td>
-<td><code><a href="../reference/split_phased_multi.html">split_phased_multi()</a></code></td>
+<td><code><a href="../reference/split_haplotype_multi.html">split_haplotype_multi()</a></code></td>
 <td>Per-haplotype GT + per-haplotype ancestry</td>
 <td>Deterministic</td>
 </tr>
@@ -136,8 +136,8 @@ two-population assumption is too restrictive.</p>
 </table>
 <p>Both return a <strong>named list of K matrices</strong> (variants ×
 samples), one per population. The 2-population special case is
-numerically identical to <code><a href="../reference/split_by_ancestry.html">split_by_ancestry()</a></code> and
-<code><a href="../reference/split_phased.html">split_phased()</a></code> respectively.</p>
+numerically identical to <code><a href="../reference/split_diploid.html">split_diploid()</a></code> and
+<code><a href="../reference/split_haplotype.html">split_haplotype()</a></code> respectively.</p>
 <hr>
 </div>
 <div class="section level2">
@@ -238,7 +238,7 @@ per mixed-ancestry diploid type:</p>
 <span>  nrow <span class="op">=</span> <span class="va">N_VAR</span>, ncol <span class="op">=</span> <span class="va">N_SAMP</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_by_ancestry_multi.html">split_by_ancestry_multi</a></span><span class="op">(</span><span class="va">gt</span>, <span class="va">anc</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid_multi.html">split_diploid_multi</a></span><span class="op">(</span><span class="va">gt</span>, <span class="va">anc</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Output list names:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Output list names: AFR EUR NAT</span></span>
@@ -334,7 +334,7 @@ a 50/50 split within each affected pair.</p>
 <code class="sourceCode R"><span><span class="co"># One sample, one variant: AFR/EUR mixed het, no other data</span></span>
 <span><span class="va">gt_s</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1L</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">anc_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">2L</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># code 2 = AFR/EUR</span></span>
-<span><span class="va">r_s</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_by_ancestry_multi.html">split_by_ancestry_multi</a></span><span class="op">(</span><span class="va">gt_s</span>, <span class="va">anc_s</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span><span class="op">)</span></span>
+<span><span class="va">r_s</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid_multi.html">split_diploid_multi</a></span><span class="op">(</span><span class="va">gt_s</span>, <span class="va">anc_s</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Singleton AFR/EUR het -&gt; AFR:"</span>, <span class="va">r_s</span><span class="op">$</span><span class="va">AFR</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>,</span>
 <span>    <span class="st">" EUR:"</span>, <span class="va">r_s</span><span class="op">$</span><span class="va">EUR</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>,</span>
 <span>    <span class="st">" NAT:"</span>, <span class="va">r_s</span><span class="op">$</span><span class="va">NAT</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -352,9 +352,9 @@ needed.</p>
 <div class="section level3">
 <h3 id="specifying-populations">2.1 Specifying populations<a class="anchor" aria-label="anchor" href="#specifying-populations"></a>
 </h3>
-<p><code><a href="../reference/split_phased_multi.html">split_phased_multi()</a></code> takes a single named integer vector
-<code>pop_codes</code> of length K. The codes must match those in the
-MSP file (RFMix default: 0-based integers).</p>
+<p><code><a href="../reference/split_haplotype_multi.html">split_haplotype_multi()</a></code> takes a single named integer
+vector <code>pop_codes</code> of length K. The codes must match those in
+the MSP file (RFMix default: 0-based integers).</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># RFMix codes: AFR=0, EUR=1, NAT=2</span></span>
 <span><span class="va">pop_codes_phased</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>AFR <span class="op">=</span> <span class="fl">0L</span>, EUR <span class="op">=</span> <span class="fl">1L</span>, NAT <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span></code></pre></div>
@@ -387,7 +387,7 @@ MSP file (RFMix default: 0-based integers).</p>
 <span>  nrow <span class="op">=</span> <span class="va">N_VAR2</span>, ncol <span class="op">=</span> <span class="va">N_SAMP2</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">phased_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_phased_multi.html">split_phased_multi</a></span><span class="op">(</span><span class="va">gt_hap0</span>, <span class="va">gt_hap1</span>,</span>
+<span><span class="va">phased_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_haplotype_multi.html">split_haplotype_multi</a></span><span class="op">(</span><span class="va">gt_hap0</span>, <span class="va">gt_hap1</span>,</span>
 <span>                                  <span class="va">anc_hap0</span>, <span class="va">anc_hap1</span>,</span>
 <span>                                  <span class="va">pop_codes_phased</span><span class="op">)</span></span>
 <span></span>
@@ -414,8 +414,8 @@ exactly one pool; there is no probabilistic component.</p>
 <div class="section level3">
 <h3 id="two-population-equivalence">2.3 Two-population equivalence<a class="anchor" aria-label="anchor" href="#two-population-equivalence"></a>
 </h3>
-<p><code><a href="../reference/split_phased_multi.html">split_phased_multi()</a></code> with K = 2 is numerically identical
-to <code><a href="../reference/split_phased.html">split_phased()</a></code>.</p>
+<p><code><a href="../reference/split_haplotype_multi.html">split_haplotype_multi()</a></code> with K = 2 is numerically
+identical to <code><a href="../reference/split_haplotype.html">split_haplotype()</a></code>.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pop2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>AFR <span class="op">=</span> <span class="fl">0L</span>, EUR <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span>
 <span><span class="va">gt0b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>,<span class="fl">0L</span>,<span class="fl">1L</span>,<span class="fl">0L</span><span class="op">)</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span></span>
@@ -423,8 +423,8 @@ to <code><a href="../reference/split_phased.html">split_phased()</a></code>.</p>
 <span><span class="va">a0b</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0L</span>,<span class="fl">1L</span>,<span class="fl">0L</span>,<span class="fl">1L</span><span class="op">)</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">a1b</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>,<span class="fl">0L</span>,<span class="fl">1L</span>,<span class="fl">0L</span><span class="op">)</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_phased_multi.html">split_phased_multi</a></span><span class="op">(</span><span class="va">gt0b</span>, <span class="va">gt1b</span>, <span class="va">a0b</span>, <span class="va">a1b</span>, <span class="va">pop2</span><span class="op">)</span></span>
-<span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_phased.html">split_phased</a></span><span class="op">(</span><span class="va">gt0b</span>, <span class="va">gt1b</span>, <span class="va">a0b</span>, <span class="va">a1b</span>, <span class="va">pop2</span><span class="op">)</span></span>
+<span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_haplotype_multi.html">split_haplotype_multi</a></span><span class="op">(</span><span class="va">gt0b</span>, <span class="va">gt1b</span>, <span class="va">a0b</span>, <span class="va">a1b</span>, <span class="va">pop2</span><span class="op">)</span></span>
+<span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_haplotype.html">split_haplotype</a></span><span class="op">(</span><span class="va">gt0b</span>, <span class="va">gt1b</span>, <span class="va">a0b</span>, <span class="va">a1b</span>, <span class="va">pop2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"AFR identical:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">m2</span><span class="op">$</span><span class="va">AFR</span><span class="op">)</span>, <span class="va">p2</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; AFR identical: TRUE</span></span>
@@ -444,8 +444,8 @@ to <code><a href="../reference/split_phased.html">split_phased()</a></code>.</p>
 </colgroup>
 <thead><tr class="header">
 <th></th>
-<th><code><a href="../reference/split_by_ancestry_multi.html">split_by_ancestry_multi()</a></code></th>
-<th><code><a href="../reference/split_phased_multi.html">split_phased_multi()</a></code></th>
+<th><code><a href="../reference/split_diploid_multi.html">split_diploid_multi()</a></code></th>
+<th><code><a href="../reference/split_haplotype_multi.html">split_haplotype_multi()</a></code></th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -496,7 +496,7 @@ adding entries to <code>pure_codes</code> and rows to
 <span>  pop1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AFR"</span>,<span class="st">"AFR"</span>,<span class="st">"AFR"</span>,<span class="st">"EUR"</span>,<span class="st">"EUR"</span>,<span class="st">"NAT"</span><span class="op">)</span>,</span>
 <span>  pop2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"EUR"</span>,<span class="st">"NAT"</span>,<span class="st">"EAS"</span>,<span class="st">"NAT"</span>,<span class="st">"EAS"</span>,<span class="st">"EAS"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># split_by_ancestry_multi(gt, anc, pure_4, mixed_4) → list of 4 matrices</span></span>
+<span><span class="co"># split_diploid_multi(gt, anc, pure_4, mixed_4) → list of 4 matrices</span></span>
 <span></span>
 <span><span class="co"># Five populations: AFR, EUR, NAT, EAS, SAS</span></span>
 <span><span class="va">pure_5</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>AFR<span class="op">=</span><span class="fl">3L</span>, EUR<span class="op">=</span><span class="fl">1L</span>, NAT<span class="op">=</span><span class="fl">4L</span>, EAS<span class="op">=</span><span class="fl">5L</span>, SAS<span class="op">=</span><span class="fl">6L</span><span class="op">)</span></span>
@@ -504,8 +504,8 @@ adding entries to <code>pure_codes</code> and rows to
 <p>There are K(K−1)/2 mixed-pair codes for K populations. For K = 4 that
 is 6 codes; for K = 5 it is 10. The <code>mixed_codes</code> data frame
 must list all of them.</p>
-<p>See <code><a href="../reference/split_by_ancestry_multi.html">?split_by_ancestry_multi</a></code> and
-<code><a href="../reference/split_phased_multi.html">?split_phased_multi</a></code> for full argument documentation.</p>
+<p>See <code><a href="../reference/split_diploid_multi.html">?split_diploid_multi</a></code> and
+<code><a href="../reference/split_haplotype_multi.html">?split_haplotype_multi</a></code> for full argument documentation.</p>
 </div>
   </div>
 
@@ -524,7 +524,7 @@ must list all of them.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

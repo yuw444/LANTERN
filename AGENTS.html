@@ -73,7 +73,7 @@
 ├── DESCRIPTION / NAMESPACE        # package metadata
 ├── R/
 │   ├── lantern.R                  # C wrappers + exported R API
-│   └── workflow.R                 # run_ancestry_pipeline() (overlap handling, monomorphic filter)
+│   └── workflow.R                 # ancestry_split_dosage() (overlap handling, monomorphic filter)
 ├── src/                           # C backend — see lantern/src/AGENTS.md
 │   ├── ancestry.c                 # split_by_ancestry, count_ancestry_codes
 │   ├── ancestry.h                 # C function declarations
@@ -81,7 +81,7 @@
 │   └── Makevars                   # PKG_CFLAGS = -O3 -march=native -Wall
 └── tests/testthat/
     ├── test-functions.R           # count_ancestry_codes + split_by_ancestry
-    └── test-workflow.R            # run_ancestry_pipeline (overlap, monomorphic)</code></pre>
+    └── test-workflow.R            # ancestry_split_dosage (overlap, monomorphic)</code></pre>
 </div>
 <div class="section level2">
 <h2 id="exported-r-functions">EXPORTED R FUNCTIONS<a class="anchor" aria-label="anchor" href="#exported-r-functions"></a></h2>
@@ -94,7 +94,7 @@
 </tr><tr><td><code>split_by_ancestry(gt, ancestry)</code></td>
 <td><code>R/lantern.R</code></td>
 <td><code>split_by_ancestry_C</code></td>
-</tr><tr><td><code>run_ancestry_pipeline(gt, pt, ...)</code></td>
+</tr><tr><td><code>ancestry_split_dosage(gt, pt, ...)</code></td>
 <td><code>R/workflow.R</code></td>
 <td>(R-only, calls <code>split_by_ancestry</code>)</td>
 </tr><tr><td><code>write_vcf_with_ancestry(...)</code></td>
@@ -150,7 +150,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>

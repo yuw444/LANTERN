@@ -9,6 +9,9 @@
 <url><loc>https://yuw444.github.io/LANTERN/articles/vcf-splitting.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/authors.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/index.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/ancestry_split_combined.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/ancestry_split_dosage.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/ancestry_split_phased.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/calc_gene_ancestry_weights.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/cauchy_combine.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/count_ancestry_codes.html</loc></url>
@@ -17,13 +20,10 @@
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_phased_gt_matrix.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/index.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/lantern-package.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/run_ancestry_pipeline.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/run_combined_pipeline.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/run_phased_pipeline.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/split_by_ancestry.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/split_by_ancestry_multi.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/split_phased.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/reference/split_phased_multi.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/split_diploid.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/split_diploid_multi.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/split_haplotype.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/split_haplotype_multi.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/subset_vcf_by_range.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/write_dosage_gds.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/write_vcf_with_ancestry.html</loc></url>

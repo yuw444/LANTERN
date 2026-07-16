@@ -89,7 +89,7 @@
       <h1 data-toc-skip>Ancestry-stratified gene-level burden tests</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/package/vignettes/gene-level-test.Rmd" class="external-link"><code>vignettes/gene-level-test.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/vignettes/gene-level-test.Rmd" class="external-link"><code>vignettes/gene-level-test.Rmd</code></a></small>
       <div class="hidden name"><code>gene-level-test.Rmd</code></div>
 
     </div>
@@ -180,7 +180,7 @@ code matrix, then call the LANTERN C backend.</p>
 <span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="va">gt_raw</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">split_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_by_ancestry.html">split_by_ancestry</a></span><span class="op">(</span><span class="va">gt_raw</span>, <span class="va">anc_raw</span><span class="op">)</span></span>
+<span><span class="va">split_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid.html">split_diploid</a></span><span class="op">(</span><span class="va">gt_raw</span>, <span class="va">anc_raw</span><span class="op">)</span></span>
 <span><span class="va">ds_afr</span> <span class="op">&lt;-</span> <span class="va">split_out</span><span class="op">$</span><span class="va">african</span>    <span class="co"># variants × samples, African ancestry dosage</span></span>
 <span><span class="va">ds_eur</span> <span class="op">&lt;-</span> <span class="va">split_out</span><span class="op">$</span><span class="va">european</span>   <span class="co"># variants × samples, European ancestry dosage</span></span>
 <span></span>
@@ -224,8 +224,8 @@ VCFs.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"GDS files created:\n"</span>, <span class="va">gds_afr</span>, <span class="st">"\n"</span>, <span class="va">gds_eur</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; GDS files created:</span></span>
-<span><span class="co">#&gt;  /tmp/RtmpAvlDi7/file1e542a915ec4.gds </span></span>
-<span><span class="co">#&gt;  /tmp/RtmpAvlDi7/file1e5420040978.gds</span></span></code></pre></div>
+<span><span class="co">#&gt;  /tmp/Rtmp7DUIhi/file43287c33ab5d.gds </span></span>
+<span><span class="co">#&gt;  /tmp/Rtmp7DUIhi/file4328d1e01c1.gds</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -345,7 +345,7 @@ signal is ancestry-specific — the key LANTERN finding.</p>
 <pre><code>Phased VCF + RFMix MSP
          │
          ▼
-  run_phased_pipeline()
+  ancestry_split_phased()
          │
     ┌────┴────┐
     │         │
@@ -383,7 +383,7 @@ workflow.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

@@ -89,7 +89,7 @@
       <h1 data-toc-skip>Splitting genotypes by local ancestry</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/package/vignettes/vcf-splitting.Rmd" class="external-link"><code>vignettes/vcf-splitting.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/vignettes/vcf-splitting.Rmd" class="external-link"><code>vignettes/vcf-splitting.Rmd</code></a></small>
       <div class="hidden name"><code>vcf-splitting.Rmd</code></div>
 
     </div>
@@ -119,16 +119,16 @@ association tests can be run separately on the African (AA) and European
 <td><strong>Unphased</strong></td>
 <td>Genotype matrix + per-variant ancestry code</td>
 <td>
-<code><a href="../reference/split_by_ancestry.html">split_by_ancestry()</a></code> /
-<code><a href="../reference/run_ancestry_pipeline.html">run_ancestry_pipeline()</a></code>
+<code><a href="../reference/split_diploid.html">split_diploid()</a></code> /
+<code><a href="../reference/ancestry_split_dosage.html">ancestry_split_dosage()</a></code>
 </td>
 </tr>
 <tr class="even">
 <td><strong>Phased</strong></td>
 <td>Per-haplotype GT + per-haplotype ancestry</td>
 <td>
-<code><a href="../reference/split_phased.html">split_phased()</a></code> /
-<code><a href="../reference/run_phased_pipeline.html">run_phased_pipeline()</a></code>
+<code><a href="../reference/split_haplotype.html">split_haplotype()</a></code> /
+<code><a href="../reference/ancestry_split_phased.html">ancestry_split_phased()</a></code>
 </td>
 </tr>
 </tbody>
@@ -141,7 +141,7 @@ association tests can be run separately on the African (AA) and European
 <div class="section level3">
 <h3 id="anatomy-of-the-input-matrices">1.1 Anatomy of the input matrices<a class="anchor" aria-label="anchor" href="#anatomy-of-the-input-matrices"></a>
 </h3>
-<p><code><a href="../reference/split_by_ancestry.html">split_by_ancestry()</a></code> takes two matrices of identical
+<p><code><a href="../reference/split_diploid.html">split_diploid()</a></code> takes two matrices of identical
 dimensions:</p>
 <ul>
 <li>
@@ -179,7 +179,7 @@ code).</p>
 <span>  nrow <span class="op">=</span> <span class="va">n_var</span>, ncol <span class="op">=</span> <span class="va">n_samp</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_by_ancestry.html">split_by_ancestry</a></span><span class="op">(</span><span class="va">gt</span>, <span class="va">anc</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid.html">split_diploid</a></span><span class="op">(</span><span class="va">gt</span>, <span class="va">anc</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African dosage (first 4 variants × 6 samples):\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; African dosage (first 4 variants × 6 samples):</span></span>
@@ -219,7 +219,7 @@ zero.</p>
 <span><span class="va">gt_edge</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">0L</span>, <span class="fl">1L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># three samples: het, ref, het</span></span>
 <span><span class="va">anc_edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># all alt carriers are MIX</span></span>
 <span></span>
-<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_by_ancestry.html">split_by_ancestry</a></span><span class="op">(</span><span class="va">gt_edge</span>, <span class="va">anc_edge</span><span class="op">)</span></span>
+<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid.html">split_diploid</a></span><span class="op">(</span><span class="va">gt_edge</span>, <span class="va">anc_edge</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Singleton MIX case — p1 = p2 = 0.5\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Singleton MIX case — p1 = p2 = 0.5</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African: "</span>, <span class="va">r</span><span class="op">$</span><span class="va">african</span>, <span class="st">"\nEuropean:"</span>, <span class="va">r</span><span class="op">$</span><span class="va">european</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -227,9 +227,9 @@ zero.</p>
 <span><span class="co">#&gt; European: 0.5 0 0.5</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="high-level-pipeline-run_ancestry_pipeline">1.4 High-level pipeline (<code>run_ancestry_pipeline</code>)<a class="anchor" aria-label="anchor" href="#high-level-pipeline-run_ancestry_pipeline"></a>
+<h3 id="high-level-pipeline-ancestry_split_dosage">1.4 High-level pipeline (<code>ancestry_split_dosage</code>)<a class="anchor" aria-label="anchor" href="#high-level-pipeline-ancestry_split_dosage"></a>
 </h3>
-<p><code><a href="../reference/run_ancestry_pipeline.html">run_ancestry_pipeline()</a></code> wraps the splitting in a full
+<p><code><a href="../reference/ancestry_split_dosage.html">ancestry_split_dosage()</a></code> wraps the splitting in a full
 pipeline that handles sample/variant overlap, monomorphic filtering, and
 optional VCF output. Its inputs are:</p>
 <ul>
@@ -264,7 +264,7 @@ region strings).</li>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_ancestry_pipeline.html">run_ancestry_pipeline</a></span><span class="op">(</span><span class="va">gt_full</span>, <span class="va">pt_full</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_dosage.html">ancestry_split_dosage</a></span><span class="op">(</span><span class="va">gt_full</span>, <span class="va">pt_full</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African matrix: "</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"variants ×"</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">african</span><span class="op">)</span>, <span class="st">"samples\n"</span><span class="op">)</span></span>
@@ -286,7 +286,7 @@ local ancestry calls, LANTERN can deterministically assign each
 haplotype’s allele to the correct ancestry background — no probabilistic
 splitting needed.</p>
 <div class="section level3">
-<h3 id="core-function-split_phased">2.1 Core function: <code>split_phased()</code><a class="anchor" aria-label="anchor" href="#core-function-split_phased"></a>
+<h3 id="core-function-split_haplotype">2.1 Core function: <code>split_haplotype()</code><a class="anchor" aria-label="anchor" href="#core-function-split_haplotype"></a>
 </h3>
 <p>Inputs are four matrices of the same shape (variants × samples):</p>
 <table class="table">
@@ -345,7 +345,7 @@ default)</td>
 <span>               <span class="fl">1L</span>, <span class="fl">0L</span>, <span class="fl">1L</span><span class="op">)</span>,</span>
 <span>             nrow <span class="op">=</span> <span class="fl">3</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">phased_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_phased.html">split_phased</a></span><span class="op">(</span><span class="va">gt0</span>, <span class="va">gt1</span>, <span class="va">a0</span>, <span class="va">a1</span><span class="op">)</span></span>
+<span><span class="va">phased_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_haplotype.html">split_haplotype</a></span><span class="op">(</span><span class="va">gt0</span>, <span class="va">gt1</span>, <span class="va">a0</span>, <span class="va">a1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"African dosage (phased):\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">phased_result</span><span class="op">$</span><span class="va">african</span><span class="op">)</span></span>
 <span><span class="co">#&gt; African dosage (phased):</span></span>
@@ -364,10 +364,10 @@ AFR count if <code>anc_hap0 == 0</code>, to EUR if
 <code>anc_hap0 == 1</code>, and nothing otherwise. Same for hap1.</p>
 </div>
 <div class="section level3">
-<h3 id="full-pipeline-run_phased_pipeline">2.2 Full pipeline (<code>run_phased_pipeline</code>)<a class="anchor" aria-label="anchor" href="#full-pipeline-run_phased_pipeline"></a>
+<h3 id="full-pipeline-ancestry_split_phased">2.2 Full pipeline (<code>ancestry_split_phased</code>)<a class="anchor" aria-label="anchor" href="#full-pipeline-ancestry_split_phased"></a>
 </h3>
-<p><code><a href="../reference/run_phased_pipeline.html">run_phased_pipeline()</a></code> orchestrates the complete workflow
-from raw files:</p>
+<p><code><a href="../reference/ancestry_split_phased.html">ancestry_split_phased()</a></code> orchestrates the complete
+workflow from raw files:</p>
 <ol style="list-style-type: decimal">
 <li>Parse the RFMix MSP file (ancestry tracts).</li>
 <li>Query sample IDs from the VCF via <code>bcftools</code>.</li>
@@ -376,7 +376,7 @@ from raw files:</p>
 <li>Map each variant to its ancestry tract with
 <code><a href="https://rdrr.io/r/base/findInterval.html" class="external-link">findInterval()</a></code>.</li>
 <li>Broadcast tract-level ancestry to variant level.</li>
-<li>Call <code><a href="../reference/split_phased.html">split_phased()</a></code> via the C backend.</li>
+<li>Call <code><a href="../reference/split_haplotype.html">split_haplotype()</a></code> via the C backend.</li>
 <li>Filter monomorphic variants.</li>
 <li>Optionally write ancestry-specific VCFs with a DS (dosage) field and
 convert them to GDS format.</li>
@@ -411,7 +411,7 @@ convert them to GDS format.</li>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"19"</span>,<span class="st">"2000"</span>,<span class="st">"3000"</span>,<span class="st">"0.1"</span>,<span class="st">"0.2"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span>,<span class="st">"0"</span>,<span class="st">"1"</span>,<span class="st">"1"</span>,<span class="st">"0"</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
 <span><span class="op">)</span>, <span class="va">msp_path</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_phased.html">ancestry_split_phased</a></span><span class="op">(</span></span>
 <span>  vcf_path  <span class="op">=</span> <span class="va">vcf_path</span>,</span>
 <span>  msp_path  <span class="op">=</span> <span class="va">msp_path</span>,</span>
 <span>  out_path  <span class="op">=</span> <span class="va">out_path</span>,</span>
@@ -464,7 +464,7 @@ downstream gene-level tests (see
 <p>The same call on a real cohort BCF + MSP (JHS chr19, 3313 samples,
 ~44 k variants — runs when the raw data files are present):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">real_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_phased_pipeline.html">run_phased_pipeline</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">real_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_phased.html">ancestry_split_phased</a></span><span class="op">(</span></span>
 <span>  vcf_path  <span class="op">=</span> <span class="st">"../../raw/LANTERN.phased.bcf"</span>,</span>
 <span>  msp_path  <span class="op">=</span> <span class="st">"../../raw/LANTERN_chr19.msp.tsv.gz"</span>,</span>
 <span>  out_path  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -487,22 +487,23 @@ downstream gene-level tests (see
 </div>
 </div>
 <div class="section level2">
-<h2 id="combined-pipeline-run_combined_pipeline">3 Combined pipeline (<code>run_combined_pipeline</code>)<a class="anchor" aria-label="anchor" href="#combined-pipeline-run_combined_pipeline"></a>
+<h2 id="combined-pipeline-ancestry_split_combined">3 Combined pipeline (<code>ancestry_split_combined</code>)<a class="anchor" aria-label="anchor" href="#combined-pipeline-ancestry_split_combined"></a>
 </h2>
 <p>When you have a phased BCF and an RFMix MSP and want
 <strong>both</strong> phased and unphased dosage estimates in one call,
-<code><a href="../reference/run_combined_pipeline.html">run_combined_pipeline()</a></code> is the single-function shortcut. It
-parses the VCF and MSP once and returns a named list with two elements,
-<code>$phased</code> and <code>$unphased</code>, each containing
-<code>african</code>, <code>european</code>, <code>variant_info</code>,
-<code>sample_ids</code>, and <code>overlap</code>.</p>
+<code><a href="../reference/ancestry_split_combined.html">ancestry_split_combined()</a></code> is the single-function shortcut.
+It parses the VCF and MSP once and returns a named list with two
+elements, <code>$phased</code> and <code>$unphased</code>, each
+containing <code>african</code>, <code>european</code>,
+<code>variant_info</code>, <code>sample_ids</code>, and
+<code>overlap</code>.</p>
 <p>The synthetic VCF and MSP created above are still in scope. The
 return value is a named list: <code>$phased</code> and
 <code>$unphased</code>, each containing one matrix per population (named
 by the MSP population labels) plus <code>variant_info</code>,
 <code>sample_ids</code>, and <code>overlap</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_combined.html">ancestry_split_combined</a></span><span class="op">(</span></span>
 <span>  vcf_path <span class="op">=</span> <span class="va">vcf_path</span>,</span>
 <span>  msp_path <span class="op">=</span> <span class="va">msp_path</span>,</span>
 <span>  verbose  <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -586,7 +587,7 @@ American (NAT) population:</p>
 <span>        collapse<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span></span>
 <span><span class="op">)</span>, <span class="va">msp3</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">combined3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span><span class="va">vcf3</span>, <span class="va">msp3</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">combined3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_combined.html">ancestry_split_combined</a></span><span class="op">(</span><span class="va">vcf3</span>, <span class="va">msp3</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">pop3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">combined3</span><span class="op">$</span><span class="va">phased</span><span class="op">)</span>,</span>
 <span>                <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variant_info"</span>, <span class="st">"sample_ids"</span>, <span class="st">"overlap"</span><span class="op">)</span><span class="op">)</span></span>
@@ -631,7 +632,7 @@ other. For rare-variant-rich real cohorts the two
 <code>variant_info</code> frames may differ by a handful of rows.</p>
 <p>On the real JHS chr19 cohort (runs when raw files are present):</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">combined_real</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">combined_real</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_combined.html">ancestry_split_combined</a></span><span class="op">(</span></span>
 <span>  vcf_path <span class="op">=</span> <span class="st">"../../raw/LANTERN.phased.bcf"</span>,</span>
 <span>  msp_path <span class="op">=</span> <span class="st">"../../raw/LANTERN_chr19.msp.tsv.gz"</span>,</span>
 <span>  chrom    <span class="op">=</span> <span class="st">"chr19"</span>,</span>
@@ -704,9 +705,9 @@ other. For rare-variant-rich real cohorts the two
 </tr>
 <tr class="odd">
 <td><strong>Key function</strong></td>
-<td><code><a href="../reference/run_ancestry_pipeline.html">run_ancestry_pipeline()</a></code></td>
-<td><code><a href="../reference/run_phased_pipeline.html">run_phased_pipeline()</a></code></td>
-<td><code><a href="../reference/run_combined_pipeline.html">run_combined_pipeline()</a></code></td>
+<td><code><a href="../reference/ancestry_split_dosage.html">ancestry_split_dosage()</a></code></td>
+<td><code><a href="../reference/ancestry_split_phased.html">ancestry_split_phased()</a></code></td>
+<td><code><a href="../reference/ancestry_split_combined.html">ancestry_split_combined()</a></code></td>
 </tr>
 </tbody>
 </table>
@@ -728,7 +729,7 @@ other. For rare-variant-rich real cohorts the two
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

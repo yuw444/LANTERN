@@ -90,7 +90,7 @@
 example</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/package/vignettes/complete-workflow.Rmd" class="external-link"><code>vignettes/complete-workflow.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/vignettes/complete-workflow.Rmd" class="external-link"><code>vignettes/complete-workflow.Rmd</code></a></small>
       <div class="hidden name"><code>complete-workflow.Rmd</code></div>
 
     </div>
@@ -107,7 +107,7 @@ and an RFMix MSP file.</p>
 <pre><code>Phased VCF/BCF  +  RFMix MSP
           │
           ▼
-  run_combined_pipeline()         ← ~3 min on chr19 / 3 313 samples
+  ancestry_split_combined()         ← ~3 min on chr19 / 3 313 samples
           │
    ┌──────┴──────┐
 phased split  unphased split     ← per-population dosage matrices
@@ -128,12 +128,12 @@ install from the GMMAT GitHub or Bioconductor).</p>
 <div class="section level2">
 <h2 id="split-genotypes-by-local-ancestry">1 Split genotypes by local ancestry<a class="anchor" aria-label="anchor" href="#split-genotypes-by-local-ancestry"></a>
 </h2>
-<p><code><a href="../reference/run_combined_pipeline.html">run_combined_pipeline()</a></code> parses the BCF and the RFMix MSP
-file once and returns ancestry-stratified dosage matrices for both the
-phased and unphased splitting methods. The phased split is deterministic
-(each haplotype’s dosage goes to the population of that haplotype); the
-unphased split is proportional (mixed singletons get equal weight to
-each ancestry).</p>
+<p><code><a href="../reference/ancestry_split_combined.html">ancestry_split_combined()</a></code> parses the BCF and the RFMix
+MSP file once and returns ancestry-stratified dosage matrices for both
+the phased and unphased splitting methods. The phased split is
+deterministic (each haplotype’s dosage goes to the population of that
+haplotype); the unphased split is proportional (mixed singletons get
+equal weight to each ancestry).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run the combined pipeline; cache to RDS on first run</span></span>
 <span><span class="va">cache_rds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">RAW</span>, <span class="st">"chr19_combined_split.rds"</span><span class="op">)</span></span>
@@ -141,7 +141,7 @@ each ancestry).</p>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">cache_rds</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">cache_rds</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>  <span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_combined_pipeline.html">run_combined_pipeline</a></span><span class="op">(</span></span>
+<span>  <span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split_combined.html">ancestry_split_combined</a></span><span class="op">(</span></span>
 <span>    vcf_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">RAW</span>, <span class="st">"LANTERN.phased.bcf"</span><span class="op">)</span>,</span>
 <span>    msp_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">RAW</span>, <span class="st">"LANTERN_chr19.msp.tsv.gz"</span><span class="op">)</span>,</span>
 <span>    chrom    <span class="op">=</span> <span class="st">"chr19"</span>,</span>
@@ -497,7 +497,7 @@ available.</p>
 <tbody>
 <tr class="odd">
 <td>Split genotypes</td>
-<td><code><a href="../reference/run_combined_pipeline.html">run_combined_pipeline()</a></code></td>
+<td><code><a href="../reference/ancestry_split_combined.html">ancestry_split_combined()</a></code></td>
 <td>lantern</td>
 </tr>
 <tr class="even">
@@ -545,7 +545,7 @@ workflow starting from dosage matrices see
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>
