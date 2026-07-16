@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Branch Warning
 
-**Always work on `r-package-c-backend`** — `origin/main` is a reverted branch pointing at a different codebase (scRNA-seq / data portal). Run `git checkout r-package-c-backend` if you're ever on the wrong branch.
+**Work on `main`.** The `package` branch (R package work) was merged into `main`; `r-package-c-backend` and `multi-ancestry` are also fully merged (0 commits ahead of `main`) and are stale. CI (`R-CMD-check.yaml`, `pkgdown.yaml`) now triggers off `main`.
 
 ## Build and Test
 
@@ -92,7 +92,7 @@ Timing from `simulation/archive/small_batch_timing.R`: ~255s/iteration with all 
 ## Known Issues
 
 - 5 pre-existing test failures in `lantern/tests/testthat/` (wrong expected values + monomorphic-filter logic); not environment bugs.
-- `lantern/src/ancestry.o`, `init.o`, `lantern.so` are incorrectly committed; `.gitignore` has unresolved conflict markers on HEAD — the `r-package-c-backend` branch has a clean version.
+- `lantern/src/ancestry.o`, `init.o`, `lantern.so` are incorrectly committed; `.gitignore` has unresolved conflict markers (`<<<<<<<`/`=======`/`>>>>>>>`) still present on `main` — needs manual resolution.
 - `~/.R/Makevars` may pin gcc 9.3 system-wide; `R.Makevars.local` (passed via `R_MAKEVARS_USER`) overrides this for pixi tasks.
 - `src/step1_*.R` defaults to hardcoded `/scratch/g/pauer/Yu/smmat/...` paths — always pass CLI flags explicitly.
 - PLINK `.bed` files are SNP-major; byte offset for variant `v` is `3 + v * ceil(N_samples / 4)` — fully random-access, no need to load the whole file.

@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [package]
+    branches: [main]
     paths:
       - 'lantern/**'
       - '.github/workflows/pkgdown.yaml'
