@@ -14,6 +14,7 @@
 <script src="pkgdown.js"></script><meta property="og:title" content="LANTERN">
 <meta property="og:description" content="Ancestry-specific rare variant burden testing for admixed populations. Splits genotype dosages by local ancestry (phased or unphased) and runs ancestry-stratified SMMAT gene-level tests via GMMAT.
 ">
+<meta property="og:image" content="https://yuw444.github.io/LANTERN/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -51,16 +52,16 @@
     </li>
 <li class="dropdown-header">Workflows</li>
     <li>
-      <a href="articles/vcf-splitting.html">Splitting genotypes by local ancestry</a>
+      <a href="articles/generating-local-ancestry.html">Generating local ancestry with RFMix2 (before you can use lantern)</a>
     </li>
     <li>
-      <a href="articles/multi-ancestry-splitting.html">Multi-ancestry splitting (K &gt;= 3 populations)</a>
+      <a href="articles/split-intuition.html">Split intuition: matrix examples for two and more populations</a>
     </li>
     <li>
-      <a href="articles/gene-level-test.html">Ancestry-stratified gene-level burden tests</a>
+      <a href="articles/toy-vcf-msp-example.html">Toy example: splitting a VCF + MSP file (two and more populations)</a>
     </li>
     <li>
-      <a href="articles/complete-workflow.html">Complete LANTERN workflow: JHS chr19 real-data example</a>
+      <a href="articles/real-data-chr19.html">Real data: chr19 association testing with binary, continuous, and count phenotypes</a>
     </li>
   </ul>
 </li>
@@ -88,7 +89,7 @@
       </header><div class="row">
   <div class="contents col-md-9">
 <div class="section level1">
-<div class="page-header"><h1 id="lantern">LANTERN<a class="anchor" aria-label="anchor" href="#lantern"></a>
+<div class="page-header"><h1 id="lantern-">LANTERN <img src="reference/figures/logo.png" align="left" height="210" alt="LANTERN logo"><a class="anchor" aria-label="anchor" href="#lantern-"></a>
 </h1></div>
 <p><strong>L</strong>everaging Local <strong>AN</strong>cestry <strong>T</strong>racts to <strong>E</strong>nhance <strong>R</strong>are-Varia<strong>N</strong>t Aggregate Association Testing</p>
 <p><a href="https://yuw444.github.io/LANTERN/"><img src="https://img.shields.io/badge/docs-pkgdown-blue" alt="pkgdown site"></a> <a href="https://github.com/yuw444/LANTERN" class="external-link"><img src="https://img.shields.io/badge/source-GitHub-lightgrey" alt="GitHub"></a></p>
@@ -286,6 +287,83 @@
 <li>
 <strong>Values</strong>: Population code, per <code>pop_codes</code> (RFMix default: <code>AFR = 0</code>, <code>EUR = 1</code>) — <strong>not</strong> the same 1/2/3 diploid codes used by the dosage split’s PT matrix</li>
 </ul>
+<div class="section level5">
+<h5 id="where-the-msp-file-comes-from">Where the MSP file comes from<a class="anchor" aria-label="anchor" href="#where-the-msp-file-comes-from"></a>
+</h5>
+<p>The <code>.msp.tsv[.gz]</code> file is one of several outputs written by <a href="https://github.com/slowkoni/rfmix" class="external-link">RFMix2</a>, a local-ancestry inference tool. A typical run that produces it looks like:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">rfmix</span> <span class="at">-f</span> query.phased.vcf.gz <span class="dt">\</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>      <span class="at">-r</span> reference_panel.phased.vcf.gz <span class="dt">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>      <span class="at">-m</span> sample_map.tsv <span class="dt">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>      <span class="at">-g</span> genetic_map.txt <span class="dt">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>      <span class="at">-o</span> LANTERN_chr19 <span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>      <span class="at">--chromosome</span><span class="op">=</span>chr19</span></code></pre></div>
+<p>This writes several sibling files sharing the <code>LANTERN_chr19</code> prefix; LANTERN only reads the <code>.msp.tsv.gz</code>:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th>File</th>
+<th>Content</th>
+<th>Used by LANTERN?</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>*.msp.tsv.gz</code></td>
+<td>Viterbi (most-likely) local-ancestry call per haplotype per tract</td>
+<td>
+<strong>Yes</strong> — <code><a href="reference/dot-parse_msp.html">.parse_msp()</a></code> / <code><a href="reference/ancestry_split_phased.html">ancestry_split_phased()</a></code> / <code>ancestry_split_combined()</code>
+</td>
+</tr>
+<tr>
+<td><code>*.fb.tsv.gz</code></td>
+<td>Forward-backward posterior probability per population per haplotype per marker</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>*.rfmix.Q.gz</code></td>
+<td>Global (genome-wide) ancestry proportion per sample, ADMIXTURE-style <code>.Q</code> format</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>*.sis.tsv.gz</code></td>
+<td>Per-SNP interpolated ancestry probability</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level5">
+<h5 id="msp-file-structure">MSP file structure<a class="anchor" aria-label="anchor" href="#msp-file-structure"></a>
+</h5>
+<pre><code>#Subpopulation order/codes: AFR=0   EUR=1
+#chm    spos    epos    sgpos   egpos   n snps  SAMPLE1.0   SAMPLE1.1   SAMPLE2.0   SAMPLE2.1   ...
+chr19   226776  518686  0.00    1.17    457 0   0   0   1   ...
+chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
+<ul>
+<li>
+<strong>Line 1</strong> (<code>#</code>-prefixed comment): population name → code mapping, e.g. <code>AFR=0  EUR=1</code>. Parsed into <code>pop_codes</code>.</li>
+<li>
+<strong>Line 2</strong> (<code>#</code>-prefixed comment): column headers.</li>
+<li>
+<strong>Data rows</strong>: one row per contiguous local-ancestry <strong>tract</strong> — a genomic segment RFMix2 called as a single ancestry block, <em>not</em> one row per variant:
+<ul>
+<li>
+<code>chm</code> — chromosome</li>
+<li>
+<code>spos</code> / <code>epos</code> — tract start/end, physical position (bp)</li>
+<li>
+<code>sgpos</code> / <code>egpos</code> — tract start/end, genetic position (cM)</li>
+<li>
+<code>n snps</code> — number of markers RFMix2 used to call this tract</li>
+<li>remaining columns — one per <strong>haplotype</strong> (named <code>&lt;sample_id&gt;.0</code>, <code>&lt;sample_id&gt;.1</code>), holding the ancestry code from line 1 for that haplotype over that tract</li>
+</ul>
+</li>
+</ul>
+<p><code><a href="reference/dot-parse_msp.html">.parse_msp()</a></code> broadcasts each tract’s call out to every variant whose position falls within <code>[spos, epos]</code>, producing the <code>anc_hap0</code>/<code>anc_hap1</code> matrices at variant resolution.</p>
+</div>
 </div>
 <div class="section level4">
 <h4 id="haplotype-genotype-matrices-gt_hap0--gt_hap1">Haplotype genotype matrices (<code>gt_hap0</code> / <code>gt_hap1</code>)<a class="anchor" aria-label="anchor" href="#haplotype-genotype-matrices-gt_hap0--gt_hap1"></a>
@@ -305,11 +383,11 @@
 <div class="section level2">
 <h2 id="automatic-overlap-handling">Automatic Overlap Handling<a class="anchor" aria-label="anchor" href="#automatic-overlap-handling"></a>
 </h2>
-<p><code><a href="reference/ancestry_split_dosage.html">ancestry_split_dosage()</a></code> automatically handles mismatches between GT and PT matrices (examples below use the dosage split; <code><a href="reference/ancestry_split_phased.html">ancestry_split_phased()</a></code> and <code><a href="reference/ancestry_split_combined.html">ancestry_split_combined()</a></code> perform the equivalent sample intersection between the VCF and MSP file automatically):</p>
+<p><code><a href="reference/ancestry_split_dosage.html">ancestry_split_dosage()</a></code> automatically handles mismatches between GT and PT matrices (examples below use the dosage split; <code><a href="reference/ancestry_split_phased.html">ancestry_split_phased()</a></code> and <code>ancestry_split_combined()</code> perform the equivalent sample intersection between the VCF and MSP file automatically):</p>
 <div class="section level3">
 <h3 id="sample-mismatches">Sample Mismatches<a class="anchor" aria-label="anchor" href="#sample-mismatches"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># GT has samples A, B, C</span></span>
 <span><span class="co"># PT has samples A, B, D</span></span>
 <span><span class="co"># -&gt; Only A and B are used</span></span>
@@ -326,7 +404,7 @@
 <div class="section level3">
 <h3 id="variantregion-mismatches">Variant/Region Mismatches<a class="anchor" aria-label="anchor" href="#variantregion-mismatches"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># GT variants: chr22:100, chr22:200, chr22:300</span></span>
 <span><span class="co"># PT regions: chr22:50-150, chr22:150-250</span></span>
 <span><span class="co"># -&gt; Only chr22:100 and chr22:200 are used (matched by coordinate)</span></span>
@@ -636,14 +714,14 @@
 </tr></tbody>
 </table>
 <p>Install bcftools via your system package manager:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># macOS</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># macOS</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
 <p>The unphased splitting functions (<code>split_diploid</code>, <code>split_diploid_multi</code>, <code>ancestry_split_dosage</code>) do <strong>not</strong> require bcftools.</p>
 </div>
 <div class="section level3">

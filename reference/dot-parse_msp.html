@@ -3,7 +3,7 @@
 MSP format: two header lines followed by data rows.
 Line 1: population codes (e.g., "#Subpopulation order/codes: AFR=0  EUR=1").
 Line 2: column headers.
-Data rows: ancestry calls per haplotype per tract.'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
+Data rows: ancestry calls per haplotype per tract.'><meta property="og:image" content="https://yuw444.github.io/LANTERN/logo.png"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
@@ -35,16 +35,16 @@ Data rows: ancestry calls per haplotype per tract.'><!-- mathjax --><script src=
   <ul class="dropdown-menu" role="menu"><li class="divider">
     <li class="dropdown-header">Workflows</li>
     <li>
-      <a href="../articles/vcf-splitting.html">Splitting genotypes by local ancestry</a>
+      <a href="../articles/generating-local-ancestry.html">Generating local ancestry with RFMix2 (before you can use lantern)</a>
     </li>
     <li>
-      <a href="../articles/multi-ancestry-splitting.html">Multi-ancestry splitting (K &gt;= 3 populations)</a>
+      <a href="../articles/split-intuition.html">Split intuition: matrix examples for two and more populations</a>
     </li>
     <li>
-      <a href="../articles/gene-level-test.html">Ancestry-stratified gene-level burden tests</a>
+      <a href="../articles/toy-vcf-msp-example.html">Toy example: splitting a VCF + MSP file (two and more populations)</a>
     </li>
     <li>
-      <a href="../articles/complete-workflow.html">Complete LANTERN workflow: JHS chr19 real-data example</a>
+      <a href="../articles/real-data-chr19.html">Real data: chr19 association testing with binary, continuous, and count phenotypes</a>
     </li>
   </ul></li>
 <li>
@@ -66,7 +66,7 @@ Data rows: ancestry calls per haplotype per tract.'><!-- mathjax --><script src=
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Parse RFMix MSP file</h1>
-    <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/R/phased.R" class="external-link"><code>R/phased.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/R/ancestry_split.R" class="external-link"><code>R/ancestry_split.R</code></a></small>
     <div class="hidden name"><code>dot-parse_msp.Rd</code></div>
     </div>
 

@@ -7,7 +7,7 @@ mixed hom-alts which each contribute one allele to each parent pool).
 Ambiguous heterozygotes in each mixed pair are then split by the
 conditional pairwise ratio \(p_i / (p_i + p_j)\).
 When no unambiguous alt alleles exist for a pair (singleton edge case),
-the split defaults to 0.5 / 0.5."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
+the split defaults to 0.5 / 0.5."><meta property="og:image" content="https://yuw444.github.io/LANTERN/logo.png"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
@@ -39,16 +39,16 @@ the split defaults to 0.5 / 0.5."><!-- mathjax --><script src="https://cdnjs.clo
   <ul class="dropdown-menu" role="menu"><li class="divider">
     <li class="dropdown-header">Workflows</li>
     <li>
-      <a href="../articles/vcf-splitting.html">Splitting genotypes by local ancestry</a>
+      <a href="../articles/generating-local-ancestry.html">Generating local ancestry with RFMix2 (before you can use lantern)</a>
     </li>
     <li>
-      <a href="../articles/multi-ancestry-splitting.html">Multi-ancestry splitting (K &gt;= 3 populations)</a>
+      <a href="../articles/split-intuition.html">Split intuition: matrix examples for two and more populations</a>
     </li>
     <li>
-      <a href="../articles/gene-level-test.html">Ancestry-stratified gene-level burden tests</a>
+      <a href="../articles/toy-vcf-msp-example.html">Toy example: splitting a VCF + MSP file (two and more populations)</a>
     </li>
     <li>
-      <a href="../articles/complete-workflow.html">Complete LANTERN workflow: JHS chr19 real-data example</a>
+      <a href="../articles/real-data-chr19.html">Real data: chr19 association testing with binary, continuous, and count phenotypes</a>
     </li>
   </ul></li>
 <li>
@@ -70,7 +70,7 @@ the split defaults to 0.5 / 0.5."><!-- mathjax --><script src="https://cdnjs.clo
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Split unphased genotype matrix by ancestry for K populations</h1>
-    <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/R/lantern.R" class="external-link"><code>R/lantern.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/yuw444/LANTERN/blob/main/R/ancestry_split.R" class="external-link"><code>R/ancestry_split.R</code></a></small>
     <div class="hidden name"><code>split_diploid_multi.Rd</code></div>
     </div>
 
