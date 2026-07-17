@@ -1,4 +1,6 @@
-# LANTERN (Leveraging local ANcestry Tracts to Enhance Rare variaNt aggregate associations)
+# LANTERN <img src="lantern/man/figures/logo.png" align="right" height="139" alt="LANTERN logo" />
+
+**L**everaging Local **AN**cestry **T**racts to **E**nhance **R**are-Varia**N**t Aggregate Association Testing
 
 ## 1. Background
 

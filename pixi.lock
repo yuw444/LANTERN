@@ -316,6 +316,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/radian-0.6.15-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/rchitect-0.4.10-py314h5bd0f2a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-h853b02a_0.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/rfmix-2.03.r0.9505bfa-h503566f_8.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.23.1-ha83d96e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sed-4.10-h19d0853_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
@@ -4435,6 +4436,16 @@ packages:
   license_family: GPL
   size: 345073
   timestamp: 1765813471974
+- conda: https://conda.anaconda.org/bioconda/linux-64/rfmix-2.03.r0.9505bfa-h503566f_8.conda
+  sha256: 4a1762b4465eec4d7a114a31fa25c05ff0079fed70e4174a6518cb905a0344d5
+  md5: 99a5ce68a7b73653c31f3bf2fafe7797
+  depends:
+  - libgcc >=13
+  - libstdcxx >=13
+  - pthread-stubs
+  license: Free for Academic Use
+  size: 222514
+  timestamp: 1764111015251
 - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.23.1-ha83d96e_0.conda
   sha256: 2cb721907a2df7c54580298d655ae7587dbed593bd5536fa8ef4a22c9ae2a496
   md5: 89624fbd17c069abcbc8b19b96d497a0

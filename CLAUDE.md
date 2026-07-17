@@ -89,6 +89,25 @@ Key design in `simulation/01_simulate_alpha.R`:
 
 Timing from `simulation/archive/small_batch_timing.R`: ~255s/iteration with all 1470 genes. At 200 SLURM CPUs (40 R workers × 10 jobs): estimated **6–8 hours total**.
 
+## Vignettes
+
+`lantern/vignettes/real-data-chr19.Rmd` needs the gitignored `raw/` JHS
+cohort data, so it can never be built by CI (`R-CMD-check.yaml`,
+`pkgdown.yaml`) or on a machine without that data. It follows the standard
+`.Rmd.orig` pattern: edit `real-data-chr19.Rmd.orig` (unguarded, real code),
+then re-knit it locally into the committed `real-data-chr19.Rmd` (static,
+no live code, safe for CI):
+
+```bash
+pixi run Rscript -e '
+  setwd("lantern/vignettes")
+  knitr::knit("real-data-chr19.Rmd.orig", output = "real-data-chr19.Rmd")
+'
+```
+
+Commit both files together. The other two vignettes (`split-intuition.Rmd`,
+`toy-vcf-msp-example.Rmd`) use only synthetic data and build normally.
+
 ## Known Issues
 
 - 5 pre-existing test failures in `lantern/tests/testthat/` (wrong expected values + monomorphic-filter logic); not environment bugs.
