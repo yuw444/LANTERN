@@ -10,13 +10,17 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ywang@mcw.edu
 
-ml R/4.3.3
+REPO=/scratch/g/pauer/Yu/LANTERN
+cd "$REPO"
+export PATH="$HOME/.pixi/bin:$PATH"
 
-Rscript /scratch/g/pauer/Yu/Tractor-RVA/src/step2_association_detection.R \
-  --african_gds /scratch/g/pauer/Yu/Tractor-RVA/test/output/aa_ds.gds \
-  --european_gds /scratch/g/pauer/Yu/Tractor-RVA/test/output/ee_ds.gds \
+# --data_file/--gene_group_file/--kinship_rds below still point at the old
+# Tractor-RVA test data location; update before running (see src/AGENTS.md).
+pixi run Rscript src/step2_association_detection.R \
+  --split_meta test/output/split_meta_chr15.rds \
   --data_file /scratch/g/pauer/Yu/Tractor-RVA/test/output/data_file.tsv \
   --gene_group_file /scratch/g/pauer/Yu/Tractor-RVA/test/data/genes_oi_group.tsv \
   --response_type count \
   --kinship_rds /scratch/g/pauer/Yu/Tractor-RVA/test/output/kinship.rds \
-  --out_file /scratch/g/pauer/Yu/Tractor-RVA/test/output/results.rds
+  --out_file test/output/results.rds \
+  --ncores "${SLURM_CPUS_PER_TASK}"

@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem-per-cpu=2gb
-#SBATCH --time=02:00:00
+#SBATCH --time=48:00:00
 #SBATCH --account=pauer
 #SBATCH --partition=normal
 #SBATCH --output=test/data/1000g/rfmix/logs/%x_%j.out

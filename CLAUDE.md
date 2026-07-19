@@ -34,21 +34,27 @@ pixi run Rscript -e 'devtools::test("lantern", filter="phased")'
 LANTERN splits genotype dosages by inferred local ancestry (African vs European) to enable ancestry-stratified rare-variant burden tests.
 
 ```
-lantern/          R package (the target product)
-  R/lantern.R     exported R wrappers; calls C via .Call()
-  R/workflow.R    high-level ancestry_split_dosage()
-  src/ancestry.c  ALL core algorithms: p1/p2 split, phased split, bed reader, vcf writer
-  src/init.c      .Call registration — must stay in sync with ancestry.h
-src/              legacy standalone pipeline (pre-package, kept for reference)
-  step1_*.R       PLINK+VCF → ancestry-split GDS (uses snpStats + bcftools shellouts)
-  step2_*.R       GMMAT/SMMAT association tests
-  step3_*.R       Cauchy-combination weight finding
+lantern/                  R package (the target product)
+  R/ancestry_split.R      Step 1: ancestry_split(), split_diploid()/split_haplotype() C wrappers, read_bed_file()
+  R/write_ancestry_gds.R  Step 2: write_ancestry_gds(), write_dosage_gds()
+  R/ancestry_smmat.R      Step 3: ancestry_smmat() (SMMAT + per-gene ancestry weights + Cauchy combination)
+  R/utils.R               cauchy_combine()
+  src/ancestry.c          ALL core algorithms: p1/p2 split, phased split, bed reader, vcf writer
+  src/init.c              .Call registration — must stay in sync with ancestry.h
+src/              legacy standalone SLURM-CLI pipeline (thin wrappers around the package)
+  step1_*.R       VCF + RFMix MSP file → ancestry-split GDS, via lantern::ancestry_split()/write_ancestry_gds()
+  step2_*.R       GMMAT/SMMAT association tests, via lantern::ancestry_smmat() (also computes Cauchy-combination weights)
 test/             SLURM runners + test data (paths are hardcoded to /scratch, don't run directly)
 simulation/       earlier power/type-I simulations
 raw/              real JHS cohort data (chr19, ~3000 samples)
 ```
 
-**Main objective**: wire the `read_bed_file_c` function in `lantern/src/ancestry.c:166-227` through `R/lantern.R` and replace the `snpStats::read.plink()` + bcftools shellouts in `src/step1_*.R` with package calls. See [AGENTS.md](AGENTS.md) for full detail.
+`src/step1_*.R` takes the same RFMix-MSP-based input as
+`lantern::ancestry_split()` (Step 1) — it's just an `optparse` CLI wrapper
+around it plus `write_ancestry_gds()`, for standalone SLURM-per-chromosome
+use. See [src/AGENTS.md](src/AGENTS.md) for usage and flags.
+`lantern::read_bed_file()` (PLINK-BED-encoded ancestry, a different input
+format) is still a package function but no longer used by `src/step1_*.R`.
 
 ## Core Algorithm
 
@@ -61,7 +67,7 @@ p2 (EUR proportion) = (N4 + 2*N7 + N8) / (sum(gt) - N5)
 
 Singleton edge case (only mixed hets carry alt allele): `p1 = p2 = 0.5`. Implemented at `ancestry.c:93-96`.
 
-**Do not "fix" the `* 0.9999` divergence** between legacy R and C without updating both; it's an intentional quirk.
+**Do not "fix" the `* 0.9999` divergence** between legacy R and C without updating both; it's an intentional quirk. (This applied to the *old* pure-R `src/step1_*.R` math, which no longer exists — that script is now a thin CLI wrapper around `lantern::ancestry_split(mode = "dosage")`, with no `0.9999` factor.)
 
 ## Key Conventions
 

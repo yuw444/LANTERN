@@ -10,12 +10,15 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ywang@mcw.edu
 
-ml R/4.3.3
+REPO=/scratch/g/pauer/Yu/LANTERN
+cd "$REPO"
+export PATH="$HOME/.pixi/bin:$PATH"
 
-Rscript /scratch/g/pauer/Yu/Tractor-RVA/src/step1_vcf_split_by_ancestry.R \
-  --bed /scratch/g/pauer/Yu/smmat/rawdata/rfmix_merged.bed \
-  --bim /scratch/g/pauer/Yu/smmat/rawdata/rfmix_merged.bim \
-  --fam /scratch/g/pauer/Yu/smmat/rawdata/rfmix_merged.fam \
+# --msp_path below is a placeholder following the old --bed/--bim/--fam
+# trio's naming convention -- update to the actual RFMix .msp.tsv path
+# before running (see src/AGENTS.md).
+pixi run Rscript src/step1_vcf_split_by_ancestry.R \
   --vcf_path /scratch/g/pauer/Yu/smmat/src/python_split/output/chr15.maf0.01.intersected.vcf.gz \
-  --out_path /scratch/g/pauer/Yu/Tractor-RVA/test/output \
+  --msp_path /scratch/g/pauer/Yu/smmat/rawdata/rfmix_merged.msp.tsv \
+  --out_path test/output \
   --chr_id 15

@@ -1,27 +1,24 @@
 library(optparse)
 option_list <- list(
   make_option(
-    c("--african_gds"),
+    c("--split_meta"),
     type = "character",
-    help = "Path to African GDS file",
-    metavar = "file"
-  ),
-  make_option(
-    c("--european_gds"),
-    type = "character",
-    help = "Path to European GDS file",
+    default = NULL,
+    help = "Path to split_meta_chr*.rds from step1 (supplies gds_paths for every population, plus per-variant ancestry counts used to weight the Cauchy combination)",
     metavar = "file"
   ),
   make_option(
     c("--data_file"),
     type = "character",
-    help = "Path to phenotype file (csv, tsv, or rds)",
+    default = NULL,
+    help = "Path to phenotype file (csv, tsv, or rds). Must contain an 'id' column; column 2 is the response, remaining columns are covariates.",
     metavar = "file"
   ),
   make_option(
     c("--gene_group_file"),
     type = "character",
-    help = "Path to gene group file",
+    default = NULL,
+    help = "Path to gene group file (no header: gene, chr, pos, ref, alt, weight)",
     metavar = "file"
   ),
   make_option(
@@ -34,150 +31,96 @@ option_list <- list(
   make_option(
     c("--kinship_rds"),
     type = "character",
-    help = "Path to kinship RDS file",
+    default = NULL,
+    help = "Path to kinship RDS file (square matrix, row/col names = sample IDs)",
     metavar = "file"
   ),
   make_option(
     c("--out_file"),
     type = "character",
+    default = NULL,
     help = "Output path to RDS file",
     metavar = "file"
+  ),
+  make_option(
+    c("--ncores"),
+    type = "integer",
+    default = NA_integer_,
+    help = "Cores for GMMAT::SMMAT() (passed through as ancestry_smmat()'s ncores). Defaults to $SLURM_CPUS_PER_TASK when running under SLURM, else 1.",
+    metavar = "n"
   )
 )
 
 opt <- parse_args(OptionParser(option_list = option_list))
 
-afr_gds <- opt$african_gds
-eur_gds <- opt$european_gds
-data_file <- opt$data_file
-gene_group_file <- opt$gene_group_file
-kinship_rds <- opt$kinship_rds
-out_file <- opt$out_file
-
-library(SeqArray)
-library(future)
-library(future.apply)
-library(MASS)
-library(data.table)
-library(dplyr)
-library(GMMAT)
-
-# basic validation
-if (
-  is.null(afr_gds) ||
-    is.null(eur_gds) ||
-    is.null(data_file) ||
-    is.null(kinship_rds) ||
-    is.null(out_file)
-) {
+required <- c("split_meta", "data_file", "gene_group_file", "kinship_rds", "out_file")
+missing_opts <- required[vapply(opt[required], is.null, logical(1))]
+if (length(missing_opts) > 0) {
   stop(
-    "All options --african_gds, --european_gds, --data_file, --kinship_rds and --out_file must be provided."
+    "Missing required option(s): --", paste(missing_opts, collapse = ", --"),
+    "\nSee: Rscript src/step2_association_detection.R --help"
   )
 }
 
-# read phenotype data (supports .rds or delimited text)
-if (grepl("\\.rds$", data_file, ignore.case = TRUE)) {
-  df_pheno <- readRDS(data_file)
-} else {
-  df_pheno <- fread(data_file)
-}
+suppressPackageStartupMessages({
+  library(lantern)
+  library(data.table)
+})
 
+# read phenotype data (supports .rds or delimited text)
+if (grepl("\\.rds$", opt$data_file, ignore.case = TRUE)) {
+  df_pheno <- readRDS(opt$data_file)
+} else {
+  df_pheno <- as.data.frame(fread(opt$data_file))
+}
 if (!"id" %in% colnames(df_pheno)) {
   stop("Phenotype data must contain an 'id' column.")
 }
 
-pheno_ids <- df_pheno$id
-
-gds <- seqOpen(afr_gds)
-gds_ids <- seqGetData(gds, "sample.id")
-seqClose(gds)
-
-df_kinship <- readRDS(kinship_rds)
-kin_ids <- colnames(df_kinship)
-
-# find common IDs among phenotype, GDS and kinship
-ids_common <- Reduce(intersect, list(pheno_ids, gds_ids, kin_ids))
-if (length(ids_common) == 0) {
-  stop("No overlapping IDs found among phenotype, GDS, and kinship samples.")
-}
-message(sprintf("Found %d overlapping IDs", length(ids_common)))
-
-# require kinship matrix to have row/col names
-if (is.null(rownames(df_kinship)) || is.null(colnames(df_kinship))) {
-  stop("df_kinship must have row and column names corresponding to sample IDs.")
-}
-
-# subset and reorder phenotype data to match the kinship order
-row_idx <- match(ids_common, df_pheno$id)
-df_pheno <- df_pheno[row_idx, , drop = FALSE]
-
-col_to_subset <- match(ids_common, kin_ids)
-## Convert kinship to plain matrix to avoid S4 serialization issues
-Kmat <- as.matrix(df_kinship[col_to_subset, col_to_subset, drop = FALSE])
-
 name_res <- colnames(df_pheno)[2]
 name_covs <- colnames(df_pheno)[3:ncol(df_pheno)]
-
-formula_to_fit <- as.formula(
-  paste0(
-    name_res,
-    " ~ ",
-    paste(name_covs, collapse = " + ")
-  )
-)
+formula_to_fit <- as.formula(paste0(name_res, " ~ ", paste(name_covs, collapse = " + ")))
 
 family_to_use <- switch(
   opt$response_type,
   continuous = gaussian(link = "identity"),
   binary = binomial(link = "logit"),
   count = poisson(link = "log"),
-  categorical = stop("Categorical response type is not yet supported.")
+  stop("Unsupported --response_type: ", opt$response_type,
+       " (use continuous, binary, or count)")
 )
 
-# NULL Models
-model0 <- glmmkin(
-  formula_to_fit,
-  data = df_pheno,
-  kins = Kmat,
-  id = "id",
-  family = family_to_use
+kinship <- readRDS(opt$kinship_rds)
+
+# split_meta (from step1) supplies gds_paths for every population, plus
+# per-variant ancestry counts, enabling ancestry_smmat() to weight the
+# Cauchy combination per gene.
+meta <- readRDS(opt$split_meta)
+if (is.null(meta$gds_paths))
+  stop("--split_meta has no $gds_paths; regenerate it with the current step1_vcf_split_by_ancestry.R")
+
+ncores <- opt$ncores
+if (is.na(ncores)) {
+  slurm_cpus <- Sys.getenv("SLURM_CPUS_PER_TASK", "")
+  ncores <- if (nzchar(slurm_cpus)) as.integer(slurm_cpus) else 1L
+}
+message("Using ncores = ", ncores, " for GMMAT::SMMAT()")
+
+result <- ancestry_smmat(
+  gds_paths       = meta$gds_paths,
+  pheno           = df_pheno,
+  formula         = formula_to_fit,
+  kinship         = kinship,
+  gene_group_file = opt$gene_group_file,
+  ancestry_counts = meta$ancestry_counts,
+  variant_info    = meta$variant_info,
+  family          = family_to_use,
+  ncores          = ncores
 )
 
-# AA only variants
-out_aa <- SMMAT(
-  model0,
-  afr_gds,
-  gene_group_file,
-  MAF.range = c(0, 0.5),
-  miss.cutoff = 1,
-  method = "davies",
-  is.dosage = TRUE,
-  ncores = 1
-)
-
-out_ee <- SMMAT(
-  model0,
-  eur_gds,
-  gene_group_file,
-  MAF.range = c(0, 0.5),
-  miss.cutoff = 1,
-  method = "davies",
-  is.dosage = TRUE,
-  ncores = 1
-)
-
-out_obs <- SMMAT(
-  model0,
-  eur_gds,
-  gene_group_file,
-  MAF.range = c(0, 0.5),
-  miss.cutoff = 1,
-  method = "davies",
-  is.dosage = FALSE,
-  ncores = 1
-)
-
-saveRDS(
-  list(aa = out_aa, ee = out_ee, observed = out_obs),
-  file = out_file
+saveRDS(result, file = opt$out_file)
+message(
+  "Wrote: ", opt$out_file,
+  " (list(results = <per-gene p_<POP>/w_<POP>/p_cauchy>,",
+  " smmat_results = <raw GMMAT::SMMAT() output per population>))"
 )

@@ -187,81 +187,109 @@ devtools::install_github("yuw444/LANTERN", subdir = "lantern")
 
 ### 5. Pipeline (legacy `./src`)
 
-* **Prerequiste**:
-    * R > 4.3.3
-      * data.table
-      * dplyr
-      * tidyr
-      * doParallel
-      * vcfR
-      * stingr
-      * SeqArray
-      * SeqVarTools
-      * snpStats
-      * GMMAT
-    * bcftools > 1.20
-    * bgzip
-    * tabix
-* **Installation**:
-  * No installation is needed, just copy the `./src` to your local machine
+Two SLURM-friendly CLI scripts (`step1_vcf_split_by_ancestry.R`,
+`step2_association_detection.R`) that wrap the `lantern` R package —
+`optparse` argument parsing and file I/O around
+`lantern::ancestry_split()` / `write_ancestry_gds()` / `ancestry_smmat()`.
+Use these if you want each step as its own SLURM job; if you're scripting
+in R directly, just call the package functions yourself (see
+`vignette("split-intuition")`, `vignette("toy-vcf-msp-example")`,
+`vignette("real-data-chr19")`). There is no separate weight-finding
+script — per-gene ancestry weights for the Cauchy combination are
+computed automatically inside Step 2.
 
-* **Input**: 
-  * plink file that contains inferred local ancestry matrix
-  * vcf file that contains variant matrix, <u>we highly suggest doing  this by chrosomes</u>.
-  * kinship matrix rds `kinship_rds` file, with column name as `id`.
-  * gene group tsv file without header `gene_group.tsv`, columns are gene, chr, pos, ref, alt, weight. For example,
-```
-GOLGA6L22	15	22460882	G	T	1
-GOLGA6L22	15	22462401	G	C	1
-GOLGA6L22	15	22464252	G	A	1
-GOLGA6L22	15	22465059	G	A	1
-GOLGA6L22	15	22465078	C	T	1
-GOLGA6L22	15	22466304	A	G	1
-HERC2P2	15	22554572	G	A	1
-HERC2P2	15	22554572	G	A	1
-```
-  * covariate tsv(csv, rds) file `data_file` with header, columns are id, response, var1, var2, ...
-```
-id	response	age	sex	PC1	PC2
-sample_001	1	63	M	-0.012	0.034
-sample_002	0	57	F	0.104	-0.021
-sample_003	0	45	M	-0.045	0.110
-sample_004	1	52	F	0.008	-0.076
-sample_005	0	39	M	0.212	0.003
-sample_006	1	71	F	-0.131	-0.044
-```
-  
-* **Step 1**: Split VCF by Ancestry
-```
-Rscript /path/to/step1_vcf_split_by_ancestry.R \
-  --bed /path/to/plink/bed \
-  --bim /path/to/plink/bim \
-  --fam /path/to/plink/fam \
-  --vcf_path /path/to/vcf \
-  --out_path /path/to/output/dir \
-  --chr_id 15
+#### Prerequisites
+
+* The `lantern` R package installed (Section 4 above)
+* `GMMAT` (`pixi run install-cran-gmmat` — not on conda/CRAN mirrors used by pixi)
+* `bcftools` ≥ 1.20 on `PATH`
+* An RFMix2-produced `.msp.tsv` file — see `vignette("generating-local-ancestry")`
+  if you need to produce one from a phased VCF
+
+No installation of `./src` itself is needed — just run the scripts with `Rscript`.
+
+#### Step 1 — split a VCF by local ancestry
+
+```bash
+Rscript src/step1_vcf_split_by_ancestry.R \
+  --vcf_path  cohort.phased.vcf.gz \
+  --msp_path  cohort.msp.tsv \
+  --out_path  out/ \
+  --chr_id    22 \
+  --mode      dosage
 ```
 
-* **Step 2**: Model the Association
-  * use the `african_gds`, `european_gds` generated from **Step1**
-  * `response_type` could be one of *continous*, *binary*, or *count*
-```
-Rscript /path/to/step2_association_detection.R \
-  --african_gds /path/to/gds \
-  --european_gds /path/to/gds \
-  --data_file /path/to/data/file \
-  --gene_group_file /path/to/gene_group_file
-  --response_type type \
-  --kinship_rds /path/to/kinship/rds \
-  --out_file /path/to/rds/file
+| Flag | Required | Meaning |
+|------|----------|---------|
+| `--vcf_path` / `-i` | yes | Phased VCF/BCF (bgzipped). May contain other chromosomes besides `--chr_id` — see "Multi-chromosome input" below. |
+| `--msp_path` | yes | RFMix `.msp.tsv` (plain text or gzipped). May also contain other chromosomes' tracts; only `--chr_id`'s are used. |
+| `--out_path` | yes | Output directory, created if missing. |
+| `--chr_id` | yes | Chromosome to process, e.g. `22` or `chr22` — must identify the same chromosome in both `--vcf_path` and `--msp_path` (a `chr` prefix mismatch between the two is handled automatically). |
+| `--mode` | no (default `dosage`) | `dosage` = proportional p1/p2 split (unphased-friendly) or `haplotype` = deterministic per-haplotype split (needs a truly phased VCF). See `vignette("split-intuition")` for the difference. |
+
+**Multi-chromosome input**: `--vcf_path`/`--msp_path` don't need to be
+pre-split per chromosome — `--chr_id` selects one chromosome out of a
+genome-wide file. When possible (the VCF's contigs can be resolved),
+`bcftools query` itself is restricted to `--chr_id`, so the other
+chromosomes' genotypes are never read into R — this keeps memory bounded
+to one chromosome's variant count even if you hand it a whole-genome VCF.
+Run one Step 1 job per chromosome (e.g. a SLURM array over `--chr_id`)
+rather than combining chromosomes into a single call.
+
+**Output** (in `--out_path`):
+
+| File | Contents |
+|------|----------|
+| `<POP>.gds` (one per population named in the MSP header, e.g. `AFR.gds`, `EUR.gds`) | Ancestry-specific dosage GDS, ready for `GMMAT::SMMAT()` (`is.dosage = TRUE`) |
+| `split_meta_chr<chr_id>.rds` | `list(gds_paths, variant_info, ancestry_counts, sample_ids, mode, chr_id)` — bundles the GDS paths above plus per-variant ancestry counts. This whole file is Step 2's `--split_meta` input. |
+
+#### Step 2 — ancestry-stratified association testing
+
+```bash
+Rscript src/step2_association_detection.R \
+  --split_meta      out/split_meta_chr22.rds \
+  --data_file       pheno.tsv \
+  --gene_group_file genes.tsv \
+  --kinship_rds     kinship.rds \
+  --response_type   continuous \
+  --out_file        results.rds \
+  --ncores          8
 ```
 
-* **Step 3**: Get the Weights for Ancestry
-  * use the `pt_matrix_chr*.tsv` from **Step1**
-```
-Rscript /path/to/step3_weight_finding.R \
-  --pt /path/to/cache/pt_matrix_chr*.tsv \
-  --gene_group /path/to/gene_group.tsv \
-  --out_file /path/to/tsv/file \
-  --chr_id 15
-```
+| Flag | Required | Meaning |
+|------|----------|---------|
+| `--split_meta` | yes | `split_meta_chr<chr_id>.rds` from Step 1 — supplies the GDS paths for every population plus per-variant ancestry counts (used to weight the Cauchy combination; equal weights if missing). |
+| `--data_file` | yes | Phenotype file, csv/tsv/rds — see format below. |
+| `--gene_group_file` | yes | Gene-group file passed straight to `GMMAT::SMMAT()` — see format below. |
+| `--kinship_rds` | yes | Kinship matrix RDS — see format below. |
+| `--response_type` | no (default `continuous`) | `continuous` (`gaussian`), `binary` (`binomial`), or `count` (`poisson`). |
+| `--out_file` | yes | Output RDS path. |
+| `--ncores` | no | Cores for `GMMAT::SMMAT()`. Defaults to `$SLURM_CPUS_PER_TASK` when set (i.e. automatically picks up `--cpus-per-task` in a SLURM job), else `1`. Pass explicitly to override. |
+
+**Input file formats**:
+
+* **Phenotype** (`--data_file`, header row required): column 1 must be
+  `id`, column 2 is the response, remaining columns are covariates (all
+  used — the formula is built as `<col2> ~ <col3> + <col4> + ...`).
+  ```
+  id	response	age	sex	PC1	PC2
+  sample_001	1	63	M	-0.012	0.034
+  sample_002	0	57	F	0.104	-0.021
+  ```
+* **Gene group** (`--gene_group_file`, no header): `gene, chr, pos, ref,
+  alt, weight`, one row per variant per gene.
+  ```
+  GOLGA6L22	15	22460882	G	T	1
+  GOLGA6L22	15	22462401	G	C	1
+  HERC2P2	15	22554572	G	A	1
+  ```
+* **Kinship** (`--kinship_rds`): an RDS of a square numeric matrix with
+  row and column names equal to sample IDs.
+
+**Output** (`--out_file`): an RDS of `ancestry_smmat()`'s return value —
+`list(results, smmat_results)`:
+* `results` — data.frame, one row per gene: `gene`, one `p_<POP>` and one
+  `w_<POP>` column per population (e.g. `p_AFR`, `w_AFR`, `p_EUR`,
+  `w_EUR`), and `p_cauchy` (the combined p-value).
+* `smmat_results` — named list (one entry per population) of the raw
+  `GMMAT::SMMAT()` output data.frames, for anyone who needs the full detail.
