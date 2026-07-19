@@ -2,7 +2,6 @@
 <url><loc>https://yuw444.github.io/LANTERN/404.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/AGENTS.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/LICENSE-text.html</loc></url>
-<url><loc>https://yuw444.github.io/LANTERN/articles/generating-local-ancestry.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/articles/index.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/articles/real-data-chr19.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/articles/split-intuition.html</loc></url>
@@ -19,8 +18,10 @@
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_msp.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_phased_gt_matrix.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_vcf_msp_common.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/dot-resolve_vcf_contig.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/index.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/lantern-package.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/read_bed_file.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/split_diploid.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/split_diploid_multi.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/split_haplotype.html</loc></url>

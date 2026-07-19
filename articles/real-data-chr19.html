@@ -49,9 +49,6 @@
     </li>
 <li class="dropdown-header">Workflows</li>
     <li>
-      <a href="../articles/generating-local-ancestry.html">Generating local ancestry with RFMix2 (before you can use lantern)</a>
-    </li>
-    <li>
       <a href="../articles/split-intuition.html">Split intuition: matrix examples for two and more populations</a>
     </li>
     <li>
@@ -98,10 +95,18 @@ binary, continuous, and count phenotypes</h1>
     
     
 <!--
-GENERATED FILE -- do not hand-edit. This is the pre-rendered output of
-real-data-chr19.Rmd.orig (knitted locally against the gitignored raw/ JHS
-data). Edit the .orig file and re-knit; see the comment at the top of it
-for the exact command.
+This is the SOURCE for vignettes/real-data-chr19.Rmd. It requires the
+gitignored raw/ JHS cohort data (see CLAUDE.md) and is never built by
+R CMD check / pkgdown directly -- CI only ever sees the pre-rendered
+vignettes/real-data-chr19.Rmd. After editing this file, re-knit it locally
+(where raw/ exists) from the repo root:
+
+  pixi run Rscript -e '
+    setwd("lantern/vignettes")
+    knitr::knit("real-data-chr19.Rmd.orig", output = "real-data-chr19.Rmd")
+  '
+
+then commit both files together.
 -->
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
@@ -166,7 +171,7 @@ nothing changes for K &gt; 2 beyond the MSP header.</li>
 <span><span class="co">#&gt; Writing GDS for AFR (1/2)...</span></span>
 <span><span class="co">#&gt; Writing GDS for EUR (2/2)...</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; === Step 2 Complete: 2 GDS file(s) written to /tmp/Rtmpilr8Cz/file1f9d1426a40752 ===</span></span>
+<span><span class="co">#&gt; === Step 2 Complete: 2 GDS file(s) written to /tmp/Rtmp7oMjf3/file699222c4d9016 ===</span></span>
 <span></span>
 <span><span class="va">ids</span> <span class="op">&lt;-</span> <span class="va">split_real</span><span class="op">$</span><span class="va">sample_ids</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Samples:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ids</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>

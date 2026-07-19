@@ -39,9 +39,6 @@ combination."><meta property="og:image" content="https://yuw444.github.io/LANTER
   <ul class="dropdown-menu" role="menu"><li class="divider">
     <li class="dropdown-header">Workflows</li>
     <li>
-      <a href="../articles/generating-local-ancestry.html">Generating local ancestry with RFMix2 (before you can use lantern)</a>
-    </li>
-    <li>
       <a href="../articles/split-intuition.html">Split intuition: matrix examples for two and more populations</a>
     </li>
     <li>
@@ -119,7 +116,15 @@ via <code><a href="split_diploid_multi.html">split_diploid_multi</a></code>, unp
 
 <dt id="arg-chrom">chrom<a class="anchor" aria-label="anchor" href="#arg-chrom"></a></dt>
 <dd><p>Chromosome to process (e.g., <code>"chr19"</code> or <code>"19"</code>).
-If <code>NULL</code>, all chromosomes present in the VCF are used.</p></dd>
+If <code>NULL</code>, all chromosomes present in the VCF are used. When
+supplied, <code>vcf_path</code> and <code>msp_path</code> may contain other
+chromosomes too: MSP tracts outside <code>chrom</code> are dropped up front,
+and <code>bcftools query</code> is restricted to <code>chrom</code> via <code>-t</code>
+when the VCF's declared or inferred contigs allow resolving the exact
+name to use (whichever of <code>chrom</code>, with, or without a leading
+"chr" matches) – other chromosomes' genotypes are never read into R.
+If the contig can't be resolved, all variants are queried and filtered
+in R instead (slower, more memory, same result).</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
