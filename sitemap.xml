@@ -14,7 +14,10 @@
 <url><loc>https://yuw444.github.io/LANTERN/reference/ancestry_split_phased.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/cauchy_combine.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/count_ancestry_codes.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/dot-assign_arm.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/dot-compute_arm_gla.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-compute_gene_weights.html</loc></url>
+<url><loc>https://yuw444.github.io/LANTERN/reference/dot-gla_call_args.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_msp.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_phased_gt_matrix.html</loc></url>
 <url><loc>https://yuw444.github.io/LANTERN/reference/dot-parse_vcf_msp_common.html</loc></url>

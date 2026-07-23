@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Toy example: splitting a VCF + MSP file (two and more populations) • lantern</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="48x48" href="../favicon-48x48.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
@@ -278,13 +283,13 @@ declared in the MSP header.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== unphased AFR (first 3 variants) ===\n"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">unphased4</span><span class="op">$</span><span class="va">AFR</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="op">]</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; === unphased AFR (first 3 variants) ===</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]</span></span>
-<span><span class="co">#&gt; [1,]    0    0    0    0    0    0    0    0    0     0   0.0     0     0     0</span></span>
-<span><span class="co">#&gt; [2,]    0    0    0    0    0    0    0    0    0     0   0.0     0     0     0</span></span>
-<span><span class="co">#&gt; [3,]    0    0    0    0    0    0    0    0    0     0   0.5     0     0     0</span></span>
+<span><span class="co">#&gt; [1,]    0    0    0    0    0    0    0    0    0     0  0.00     0     0     0</span></span>
+<span><span class="co">#&gt; [2,]    0    0    0    0    0    0    0    0    0     0  0.00     0     0     0</span></span>
+<span><span class="co">#&gt; [3,]    0    0    0    0    0    0    0    0    0     0  0.37     0     0     0</span></span>
 <span><span class="co">#&gt;      [,15] [,16] [,17] [,18] [,19] [,20] [,21] [,22] [,23] [,24]</span></span>
-<span><span class="co">#&gt; [1,]     0     0     0     0     0     0     0     0     0     0</span></span>
-<span><span class="co">#&gt; [2,]     0     1     0     0     0     1     0     1     0     0</span></span>
-<span><span class="co">#&gt; [3,]     0     0     0     0     0     0     0     0     0     0</span></span></code></pre></div>
+<span><span class="co">#&gt; [1,]     0     0     0     0     0  0.00     0  0.00     0     0</span></span>
+<span><span class="co">#&gt; [2,]     0     1     0     0     0  0.82     0  0.85     0     0</span></span>
+<span><span class="co">#&gt; [3,]     0     0     0     0     0  0.06     0  0.00     0     0</span></span></code></pre></div>
 <p>Next: <code><a href="../articles/real-data-chr19.html">vignette("real-data-chr19")</a></code> takes a split result
 like this one through <code><a href="../reference/write_ancestry_gds.html">write_ancestry_gds()</a></code> (Step 2) and
 <code><a href="../reference/ancestry_smmat.html">ancestry_smmat()</a></code> (Step 3) on real genotype data.</p>
