@@ -25,4 +25,4 @@ Defining and initializing conditional random field...
 Defining and initializing conditional random field...   done
 98584873 (3.8%) variant alleles	73196 (0.0%) missing alleles
 
-Generating internal simulation samples...    [2026-07-17T17:15:01.085] error: *** JOB 7187312 ON cn11 CANCELLED AT 2026-07-17T17:15:01 DUE to SIGNAL Terminated ***
+Generating internal simulation samples...    [2026-07-19T17:15:08.060] error: *** JOB 7187557 ON cn11 CANCELLED AT 2026-07-19T17:15:08 DUE TO TIME LIMIT ***

@@ -36,6 +36,8 @@ LANTERN splits genotype dosages by inferred local ancestry (African vs European)
 ```
 lantern/                  R package (the target product)
   R/ancestry_split.R      Step 1: ancestry_split(), split_diploid()/split_haplotype() C wrappers, read_bed_file()
+  R/global_ancestry.R     GLA shrinkage: .assign_arm(), .compute_arm_gla() (see Core Algorithm)
+  R/sysdata.rda           Internal data: centromeres_hg38 (chrom, p_end, q_start), from data-raw/centromeres_hg38.R
   R/write_ancestry_gds.R  Step 2: write_ancestry_gds(), write_dosage_gds()
   R/ancestry_smmat.R      Step 3: ancestry_smmat() (SMMAT + per-gene ancestry weights + Cauchy combination)
   R/utils.R               cauchy_combine()
@@ -65,7 +67,41 @@ p1 (AFR proportion) = (2*N1 + N2 + N4) / (sum(gt) - N5)
 p2 (EUR proportion) = (N4 + 2*N7 + N8) / (sum(gt) - N5)
 ```
 
-Singleton edge case (only mixed hets carry alt allele): `p1 = p2 = 0.5`. Implemented at `ancestry.c:93-96`.
+### GLA shrinkage
+
+When a variant's alt allele is carried mostly (or, in the singleton case,
+entirely) by ambiguous mixed-ancestry heterozygotes (`N5`), the raw p1/p2
+above is poorly estimated from that variant alone. Both `split_by_ancestry_c`
+(2-population) and `split_by_ancestry_multi_c` (K-population, the function
+that actually backs the `ancestry_split()`/`src/step1_*.R` pipeline) now
+shrink the raw ratio toward a **global local ancestry (GLA)** proportion:
+
+```
+w  = N5 / (N1 + N2 + N4 + N5 + N7 + N8)   # fraction of alt-carriers that are ambiguous
+p1 = (1 - w) * p1_raw + w * GLA_AFR[arm]
+```
+
+`w = 1` (all evidence ambiguous) reduces to `p1 = GLA_AFR` exactly, subsuming
+the old flat singleton fallback. GLA is computed once per chromosome arm
+(p/q, split at the centromere) in `.compute_arm_gla()`
+(`R/global_ancestry.R`), from the MSP ancestry **tracts directly** —
+length-weighted diploid ancestry-code counts, not haplotype phase and not
+genotypes — so it's unaffected by allele frequency and is always well-defined
+for any arm with at least one tract. Arms with zero tracts (e.g. the
+acrocentric p-arms of chr13/14/15/21/22) fall back to the whole-chromosome
+GLA. p/q boundaries come from `centromeres_hg38` (`R/sysdata.rda`), sourced
+from UCSC's hg38 "centromeres" track (autosomes only, chr1-chr22) —
+regenerate via `pixi run Rscript lantern/data-raw/centromeres_hg38.R` if UCSC
+revises the models.
+
+Both C functions accept `gla`/`arm_id` as their last two arguments; passing a
+zero-length `gla` disables shrinkage and reproduces the original 0.5/0.5
+singleton fallback bit-for-bit (this is the default on `split_diploid()`/
+`split_diploid_multi()` when called directly). `ancestry_split()` always
+computes and applies GLA shrinkage automatically in `mode = "dosage"`
+(`mode = "haplotype"` is deterministic and has no ambiguous ratio to shrink).
+The direct-matrix `ancestry_split_dosage(gt_matrix, pt_matrix)` legacy path
+has no position information and never applies shrinkage.
 
 **Do not "fix" the `* 0.9999` divergence** between legacy R and C without updating both; it's an intentional quirk. (This applied to the *old* pure-R `src/step1_*.R` math, which no longer exists — that script is now a thin CLI wrapper around `lantern::ancestry_split(mode = "dosage")`, with no `0.9999` factor.)
 
@@ -116,8 +152,8 @@ Commit both files together. The other two vignettes (`split-intuition.Rmd`,
 
 ## Known Issues
 
-- 5 pre-existing test failures in `lantern/tests/testthat/` (wrong expected values + monomorphic-filter logic); not environment bugs.
-- `lantern/src/ancestry.o`, `init.o`, `lantern.so` are incorrectly committed; `.gitignore` has unresolved conflict markers (`<<<<<<<`/`=======`/`>>>>>>>`) still present on `main` — needs manual resolution.
+- Full testthat suite passes (0 failures) as of the GLA-shrinkage change (see Core Algorithm). If failures reappear, check first whether they're GLA-shrinkage-related (many p1/p2 expected values in `test-ancestry_split.R` changed meaning when shrinkage is active) before assuming environment bugs.
+- `.gitignore` has unresolved conflict markers (`<<<<<<<`/`=======`/`>>>>>>>`) still present on `main` — needs manual resolution. (`lantern/src/ancestry.o`/`init.o`/`lantern.so` are correctly gitignored despite this and are not tracked — verified via `git ls-files`.)
 - `~/.R/Makevars` may pin gcc 9.3 system-wide; `R.Makevars.local` (passed via `R_MAKEVARS_USER`) overrides this for pixi tasks.
 - `src/step1_*.R` defaults to hardcoded `/scratch/g/pauer/Yu/smmat/...` paths — always pass CLI flags explicitly.
 - PLINK `.bed` files are SNP-major; byte offset for variant `v` is `3 + v * ceil(N_samples / 4)` — fully random-access, no need to load the whole file.
