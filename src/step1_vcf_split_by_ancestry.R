@@ -30,6 +30,12 @@ option_list <- list(
         type = "character",
         default = "dosage",
         help = "Split algorithm: 'dosage' (proportional p1/p2 split, unphased) or 'haplotype' (deterministic per-haplotype split, requires phased VCF) [default %default]"
+    ),
+    make_option(
+        c("--use_gla"),
+        type = "logical",
+        default = TRUE,
+        help = "mode='dosage' only: apply GLA (global local ancestry) shrinkage to ambiguous mixed-ancestry heterozygotes (see CLAUDE.md's Core Algorithm section). FALSE reproduces the original pre-shrinkage p[k] estimator exactly. Ignored for mode='haplotype'. [default %default]"
     )
 )
 opt <- parse_args(OptionParser(option_list = option_list))
@@ -55,6 +61,7 @@ split_result <- ancestry_split(
     msp_path = opt$msp_path,
     mode     = opt$mode,
     chrom    = opt$chr_id,
+    use_gla  = opt$use_gla,
     verbose  = TRUE
 )
 
@@ -71,6 +78,7 @@ saveRDS(
         ancestry_counts = split_result$ancestry_counts,
         sample_ids      = split_result$sample_ids,
         mode            = split_result$mode,
+        use_gla         = opt$use_gla,
         chr_id          = opt$chr_id
     ),
     meta_path
