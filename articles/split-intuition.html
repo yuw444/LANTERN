@@ -208,9 +208,17 @@ p2 = (N_MIX_hom + 2·N_EUR_hom + N_EUR_het) / denominator</code></pre>
 <p>where <code>denominator = total_alt_alleles − N_MIX_het</code>
 (mixed-het samples are assigned stochastically via p1/p2 rather than
 excluded from the denominator).</p>
-<p><strong>Singleton edge-case</strong>: when <em>all</em> alt alleles
-are carried by mixed-het individuals, p1 = p2 = 0.5 to avoid dividing by
-zero.</p>
+<p><strong>Ambiguous-dominated edge-case</strong>: when <em>all</em> alt
+alleles are carried by mixed-het individuals (the extreme case),
+<code><a href="../reference/split_diploid.html">split_diploid()</a></code> alone (no <code>gla</code> argument, its
+default) falls back to p1 = p2 = 0.5 to avoid dividing by zero. But the
+more general problem isn’t just this all-ambiguous extreme — it’s any
+variant where mixed-het carriers <em>dominate</em> the observations,
+even with one or two unambiguous carriers still present to compute a
+(misleadingly confident) ratio from. <strong>Part C below explains why
+that’s worth improving on, and how</strong>;
+<code><a href="../reference/ancestry_split.html">ancestry_split()</a></code> applies that improvement (GLA shrinkage)
+automatically.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A variant where only mixed-het (code 2) samples carry the alt allele</span></span>
 <span><span class="va">gt_edge</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">0L</span>, <span class="fl">1L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># three samples: het, ref, het</span></span>
@@ -489,11 +497,14 @@ in pool j.</p>
 <span><span class="co">#&gt; Variant 3  D=5  p_AFR=0.600  p_EUR=0.400  p_NAT=0.000</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"p1+p2+p3 ="</span>, <span class="va">p1</span> <span class="op">+</span> <span class="va">p2</span> <span class="op">+</span> <span class="va">p3</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; p1+p2+p3 = 1</span></span></code></pre></div>
-<p><strong>Singleton edge case.</strong> When the denominator D = 0 for
-a given variant (all alt alleles are carried exclusively by
+<p><strong>Ambiguous-dominated edge case.</strong> When the denominator
+D = 0 for a given variant (all alt alleles are carried exclusively by
 mixed-ancestry heterozygotes, with no pure-ancestry or mixed hom-alt alt
-alleles), the function falls back to a 50/50 split within each affected
-pair.</p>
+alleles), <code><a href="../reference/split_diploid_multi.html">split_diploid_multi()</a></code> alone (no <code>gla</code>
+argument, its default) falls back to a 50/50 split within each affected
+pair. That’s the extreme case, but the same unreliability shows up
+whenever mixed-het carriers dominate the count even with D &gt; 0 — Part
+C revisits both.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># One sample, one variant: AFR/EUR mixed het, no other data</span></span>
 <span><span class="va">gt_s</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1L</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -623,11 +634,109 @@ must list all of them.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"K=5 mixed_codes has"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mixed_5</span><span class="op">)</span>, <span class="st">"rows (expected 5*4/2 ="</span>, <span class="fl">5</span> <span class="op">*</span> <span class="fl">4</span> <span class="op">/</span> <span class="fl">2</span>, <span class="st">")\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; K=5 mixed_codes has 10 rows (expected 5*4/2 = 10 )</span></span></code></pre></div>
+<hr>
+</div>
+</div>
+<div class="section level2">
+<h2 id="part-c-gla-shrinkage-when-ambiguous-carriers-dominate">Part C: GLA shrinkage — when ambiguous carriers dominate<a class="anchor" aria-label="anchor" href="#part-c-gla-shrinkage-when-ambiguous-carriers-dominate"></a>
+</h2>
+<p>Parts A and B each flagged an edge case and deferred it here: the
+pure singleton (D = 0, every alt allele carried by mixed-ancestry
+heterozygotes) is only the extreme end of a broader problem — the raw
+formula gets unreliable well before D actually hits zero, any time
+ambiguous mixed-het carriers <em>dominate</em> the count. Take 10
+AFR/EUR mixed-het carriers (code 2) and just <strong>one</strong>
+pure-EUR hom-alt carrier (code 1) at the same variant — nothing
+else:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gt_dom</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fl">2L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># 10 mixed hets + 1 pure EUR hom-alt</span></span>
+<span><span class="va">anc_dom</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fl">1L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># code 2 = AFR/EUR, code 1 = EUR</span></span>
+<span></span>
+<span><span class="va">r_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid_multi.html">split_diploid_multi</a></span><span class="op">(</span><span class="va">gt_dom</span>, <span class="va">anc_dom</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span><span class="op">)</span>  <span class="co"># gla=NULL (default)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Raw split -&gt; AFR total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">AFR</span><span class="op">)</span>,</span>
+<span>    <span class="st">" EUR total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">EUR</span><span class="op">)</span>, <span class="st">" NAT total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">NAT</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Raw split -&gt; AFR total: 0  EUR total: 12  NAT total: 0</span></span></code></pre></div>
+<p>D &gt; 0 here, so this isn’t the singleton branch — the raw formula
+happily computes p_AFR = 0, p_EUR = 1 from that one unambiguous carrier,
+and confidently assigns <strong>all ten</strong> ambiguous carriers’ alt
+alleles to EUR. That’s not a “no answer, guess 50/50” problem; it’s a
+<em>confidently wrong-looking</em> answer extrapolated from a single
+data point. Nothing in the raw formula distinguishes “1 unambiguous
+carrier informing 2 total alt alleles” from “1 unambiguous carrier
+informing 100” — it takes whatever ratio it computes at face value,
+regardless of how little evidence backs it.</p>
+<p><strong>GLA (global local ancestry) shrinkage</strong> fixes both
+this case and the pure singleton with one mechanism: discount the raw
+ratio in proportion to how much of a variant’s evidence is actually
+ambiguous, and fill in the rest from the chromosome arm’s
+independently-estimated ancestry mixture:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mfrac><mtext mathvariant="normal">ambiguous carriers</mtext><mtext mathvariant="normal">all alt-carriers at this variant</mtext></mfrac><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>p</mi><mi>k</mi></msub><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><msubsup><mi>p</mi><mi>k</mi><mtext mathvariant="normal">raw</mtext></msubsup><mo>+</mo><mi>w</mi><mo>⋅</mo><msub><mtext mathvariant="normal">GLA</mtext><mi>k</mi></msub><mo stretchy="false" form="prefix">[</mo><mtext mathvariant="normal">arm</mtext><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">w = \frac{\text{ambiguous carriers}}{\text{all alt-carriers at this variant}}, \qquad
+p_k = (1-w)\,p_k^{\text{raw}} + w \cdot \text{GLA}_k[\text{arm}]</annotation></semantics></math></p>
+<p><code>w = 0</code> (unambiguous carriers dominate) reduces to exactly
+the raw formula from Parts A/B. <code>w = 1</code> (the pure singleton)
+falls back entirely to the arm’s GLA proportion — not a coin flip;
+that’s just one end of this continuum, not a separate mechanism.
+<code>GLA_k[arm]</code> itself is computed once per chromosome arm
+(split at the centromere) directly from the MSP ancestry
+<strong>tracts</strong>, not from genotypes or phase, so it stays
+well-estimated regardless of how rare any individual variant is.</p>
+<p><code><a href="../reference/split_diploid.html">split_diploid()</a></code>/<code><a href="../reference/split_diploid_multi.html">split_diploid_multi()</a></code>
+accept this as an optional <code>gla</code> (proportions) +
+<code>arm_id</code> (which row of <code>gla</code> each variant uses)
+argument pair; leaving them at their default <code>NULL</code>
+reproduces Parts A/B exactly, as seen above. Revisiting the example
+above with a <code>gla</code> argument supplied — say, this arm’s cohort
+is mostly AFR/EUR admixed with little NAT ancestry:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># This arm's actual ancestry mixture (from MSP tracts, not this variant)</span></span>
+<span><span class="va">gla_arm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.70</span>, <span class="fl">0.25</span>, <span class="fl">0.05</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>                   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"p"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AFR"</span>, <span class="st">"EUR"</span>, <span class="st">"NAT"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">r_gla</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid_multi.html">split_diploid_multi</a></span><span class="op">(</span><span class="va">gt_dom</span>, <span class="va">anc_dom</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span>,</span>
+<span>                              gla <span class="op">=</span> <span class="va">gla_arm</span>, arm_id <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Without GLA -&gt; AFR total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">AFR</span><span class="op">)</span>,</span>
+<span>    <span class="st">" EUR total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">EUR</span><span class="op">)</span>, <span class="st">" NAT total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">NAT</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Without GLA -&gt; AFR total: 0  EUR total: 12  NAT total: 0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With GLA    -&gt; AFR total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_gla</span><span class="op">$</span><span class="va">AFR</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>    <span class="st">" EUR total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_gla</span><span class="op">$</span><span class="va">EUR</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>    <span class="st">" NAT total:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_gla</span><span class="op">$</span><span class="va">NAT</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; With GLA    -&gt; AFR total: 6.7  EUR total: 5.3  NAT total: 0</span></span></code></pre></div>
+<p>Here <code>w = 10/11 ≈ 0.91</code> — the near-total ambiguity is
+almost fully discounted, and the ten mixed-het carriers now split
+roughly 2:1 toward AFR (matching the arm’s 0.70/0.25 mixture) instead of
+being handed to EUR outright. Same ten carriers, same one pure-EUR data
+point — but the GLA-informed split reflects what’s actually known about
+<em>this arm, this cohort</em>, instead of extrapolating from one
+sample. The pure singleton from B.1 is the same mechanism at its extreme
+(<code>w = 1</code>, no unambiguous carriers at all):</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gt_s</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1L</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">anc_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">2L</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># code 2 = AFR/EUR</span></span>
+<span></span>
+<span><span class="va">r_flat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid_multi.html">split_diploid_multi</a></span><span class="op">(</span><span class="va">gt_s</span>, <span class="va">anc_s</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span><span class="op">)</span>                      <span class="co"># gla=NULL (default)</span></span>
+<span><span class="va">r_gla_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/split_diploid_multi.html">split_diploid_multi</a></span><span class="op">(</span><span class="va">gt_s</span>, <span class="va">anc_s</span>, <span class="va">pure_codes</span>, <span class="va">mixed_codes</span>,</span>
+<span>                                gla <span class="op">=</span> <span class="va">gla_arm</span>, arm_id <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Without GLA (flat fallback) -&gt; AFR:"</span>, <span class="va">r_flat</span><span class="op">$</span><span class="va">AFR</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>,</span>
+<span>    <span class="st">" EUR:"</span>, <span class="va">r_flat</span><span class="op">$</span><span class="va">EUR</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>, <span class="st">" NAT:"</span>, <span class="va">r_flat</span><span class="op">$</span><span class="va">NAT</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Without GLA (flat fallback) -&gt; AFR: 0.5  EUR: 0.5  NAT: 0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With GLA (this arm's ancestry) -&gt; AFR:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r_gla_s</span><span class="op">$</span><span class="va">AFR</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>    <span class="st">" EUR:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r_gla_s</span><span class="op">$</span><span class="va">EUR</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">" NAT:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r_gla_s</span><span class="op">$</span><span class="va">NAT</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; With GLA (this arm's ancestry) -&gt; AFR: 0.737  EUR: 0.263  NAT: 0</span></span></code></pre></div>
+<p>In practice you won’t build <code>gla</code>/<code>arm_id</code> by
+hand — <code>ancestry_split(mode = "dosage")</code> computes both
+automatically from the MSP file’s tracts and applies them for you. Pass
+<code>use_gla = FALSE</code> to turn shrinkage off and get the flat
+Parts A/B behavior instead, e.g. for comparing against the original
+estimator:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">split_gla</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split.html">ancestry_split</a></span><span class="op">(</span><span class="va">vcf_path</span>, <span class="va">msp_path</span>, mode <span class="op">=</span> <span class="st">"dosage"</span><span class="op">)</span>                    <span class="co"># use_gla=TRUE (default)</span></span>
+<span><span class="va">split_flat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ancestry_split.html">ancestry_split</a></span><span class="op">(</span><span class="va">vcf_path</span>, <span class="va">msp_path</span>, mode <span class="op">=</span> <span class="st">"dosage"</span>, use_gla <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>See <code><a href="../reference/split_diploid_multi.html">?split_diploid_multi</a></code> and
 <code><a href="../reference/split_haplotype_multi.html">?split_haplotype_multi</a></code> for full argument documentation.
 Next: <code><a href="../articles/toy-vcf-msp-example.html">vignette("toy-vcf-msp-example")</a></code> builds these same
 inputs from real VCF + MSP file formats.</p>
-</div>
 </div>
   </div>
 

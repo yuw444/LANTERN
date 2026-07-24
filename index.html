@@ -589,12 +589,27 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </h4>
 <ul>
 <li>
-<strong>Singleton</strong>: When all alt alleles come from mixed het individuals (N5 = sum(gt)), p1 = p2 = 0.5</li>
-<li>
 <strong>Homozygous alt (gt=2)</strong>: 1 allele to each ancestry regardless of pt</li>
 <li>
 <strong>Pure ancestry (pt=1 or pt=3)</strong>: All alt alleles to that ancestry</li>
+<li>
+<strong>N5 dominates</strong>: When ambiguous mixed-ancestry heterozygotes (N5) make up most or all of a variant’s carriers — up to and including the singleton case, N5 = every carrier, where the formula is literally undefined (denominator = 0) — the raw p1/p2 ratio becomes unreliable. <code><a href="reference/ancestry_split.html">ancestry_split()</a></code> applies <strong>GLA shrinkage</strong> by default to fix this; see below.</li>
 </ul>
+</div>
+<div class="section level4">
+<h4 id="gla-shrinkage-why-an-ambiguous-dominated-variant-needs-outside-evidence">GLA shrinkage: why an ambiguous-dominated variant needs outside evidence<a class="anchor" aria-label="anchor" href="#gla-shrinkage-why-an-ambiguous-dominated-variant-needs-outside-evidence"></a>
+</h4>
+<p>The raw formula estimates a variant’s ancestry split from its own unambiguous carriers, then applies that ratio to the ambiguous ones. That works fine when unambiguous carriers are plentiful — but consider N5 = 10 (ten ambiguous mixed-ancestry heterozygotes) with everything else zero except N7 = 1 (one pure-European homozygous-alt carrier):</p>
+<pre><code><span><span class="va">total_alt</span>   <span class="op">=</span> <span class="fl">2</span><span class="op">*</span><span class="va">N1</span> <span class="op">+</span> <span class="va">N2</span> <span class="op">+</span> <span class="fl">2</span><span class="op">*</span><span class="va">N4</span> <span class="op">+</span> <span class="va">N5</span> <span class="op">+</span> <span class="fl">2</span><span class="op">*</span><span class="va">N7</span> <span class="op">+</span> <span class="va">N8</span> <span class="op">=</span> <span class="fl">2</span><span class="op">*</span><span class="fl">0</span><span class="op">+</span><span class="fl">0</span><span class="op">+</span><span class="fl">2</span><span class="op">*</span><span class="fl">0</span><span class="op">+</span><span class="fl">10</span><span class="op">+</span><span class="fl">2</span><span class="op">*</span><span class="fl">1</span><span class="op">+</span><span class="fl">0</span> <span class="op">=</span> <span class="fl">12</span></span>
+<span><span class="va">denominator</span> <span class="op">=</span> <span class="va">total_alt</span> <span class="op">-</span> <span class="va">N5</span>                    <span class="op">=</span> <span class="fl">12</span> <span class="op">-</span> <span class="fl">10</span>             <span class="op">=</span> <span class="fl">2</span></span>
+<span><span class="va">p1</span> <span class="op">=</span> <span class="op">(</span><span class="fl">2</span><span class="op">*</span><span class="va">N1</span> <span class="op">+</span> <span class="va">N2</span> <span class="op">+</span> <span class="va">N4</span><span class="op">)</span> <span class="op">/</span> <span class="va">denominator</span> <span class="op">=</span> <span class="op">(</span><span class="fl">0</span><span class="op">+</span><span class="fl">0</span><span class="op">+</span><span class="fl">0</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span> <span class="op">=</span> <span class="fl">0</span></span>
+<span><span class="va">p2</span> <span class="op">=</span> <span class="op">(</span><span class="va">N4</span> <span class="op">+</span> <span class="fl">2</span><span class="op">*</span><span class="va">N7</span> <span class="op">+</span> <span class="va">N8</span><span class="op">)</span> <span class="op">/</span> <span class="va">denominator</span> <span class="op">=</span> <span class="op">(</span><span class="fl">0</span><span class="op">+</span><span class="fl">2</span><span class="op">+</span><span class="fl">0</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span> <span class="op">=</span> <span class="fl">1</span></span></code></pre>
+<p>The formula confidently assigns <strong>all ten</strong> ambiguous carriers 100% European ancestry (p1=0, p2=1), extrapolated from a single unambiguous data point. Unlike the pure singleton, this isn’t a “no answer” case — the denominator is nonzero, so nothing flags it as unreliable. It’s a <em>confidently wrong-looking</em> answer: the raw formula can’t distinguish “1 unambiguous carrier informing 2 total alt alleles” from “1 unambiguous carrier informing 100 total” — it takes whatever ratio it computes at face value, regardless of how little evidence backs it.</p>
+<p><strong>GLA (global local ancestry) shrinkage</strong> fixes this — and the pure singleton — with one mechanism: discount the raw ratio in proportion to how much of a variant’s evidence is actually ambiguous, and fill in the rest from the chromosome arm’s independently-estimated ancestry mixture (from RFMix’s tracts, not this variant’s genotypes):</p>
+<pre><code><span><span class="va">w</span>  <span class="op">=</span> <span class="va">N5</span> <span class="op">/</span> <span class="op">(</span><span class="va">N1</span> <span class="op">+</span> <span class="va">N2</span> <span class="op">+</span> <span class="va">N4</span> <span class="op">+</span> <span class="va">N5</span> <span class="op">+</span> <span class="va">N7</span> <span class="op">+</span> <span class="va">N8</span><span class="op">)</span>   <span class="co"># fraction of carriers that are ambiguous</span></span>
+<span><span class="va">p1</span> <span class="op">=</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">w</span><span class="op">)</span> <span class="op">*</span> <span class="va">p1_raw</span> <span class="op">+</span> <span class="va">w</span> <span class="op">*</span> <span class="va">GLA_AFR</span><span class="op">[</span><span class="va">arm</span><span class="op">]</span></span></code></pre>
+<p>For the example above, <code>w = 10/11 ≈ 0.91</code> — the near-total ambiguity is almost fully discounted. If this cohort’s arm-level ancestry runs 60% AFR / 40% EUR, GLA shrinkage gives <code>p1 ≈ 0.55, p2 ≈ 0.45</code> instead of the raw formula’s <code>p1=0, p2=1</code> — a moderate, defensible estimate instead of a hard call backed by one data point. <code>w = 0</code> (unambiguous carriers dominate) leaves the raw formula untouched; <code>w = 1</code> (the pure singleton) falls back entirely to the arm’s GLA proportion instead of a coin flip — the old special case is just one end of this same continuum, not a separate mechanism.</p>
+<p><code>ancestry_split(mode = "dosage")</code> computes and applies this automatically. Pass <code>use_gla = FALSE</code> to disable it and reproduce the original raw-ratio / flat-0.5-singleton estimator exactly (or call <code><a href="reference/split_diploid.html">split_diploid()</a></code>/<code><a href="reference/split_diploid_multi.html">split_diploid_multi()</a></code> directly with <code>gla = NULL</code>, the default, for the same effect at the matrix level). See <code><a href="articles/split-intuition.html">vignette("split-intuition")</a></code> for a worked example and the K &gt; 2 generalisation.</p>
 </div>
 <div class="section level4">
 <h4 id="intuition-for-k--2-populations-split_diploid_multi">Intuition for K &gt; 2 populations (<code>split_diploid_multi</code>)<a class="anchor" aria-label="anchor" href="#intuition-for-k--2-populations-split_diploid_multi"></a>
@@ -604,7 +619,7 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 <li>
 <strong>Build a per-population weight from unambiguous carriers.</strong> A pure homozygous-alt sample contributes 2 alleles to its own population’s weight; a pure heterozygote contributes 1; and — the key unambiguous case — a <strong>mixed-pair homozygous-alt</strong> sample contributes exactly 1 allele to <em>each</em> of its two parent populations, because carrying two alt copies with ancestry split between two populations means one copy must have come from each side.</li>
 <li>
-<strong>Distribute the ambiguous alleles proportionally.</strong> A mixed-pair heterozygote carries exactly one alt allele but its parental origin is unknown, so it’s split between its two parent populations <code>i</code> and <code>j</code> using the conditional ratio <code>w_i / (w_i + w_j)</code> — i.e. in proportion to how often each population’s allele shows up unambiguously elsewhere at this variant. If neither population has unambiguous evidence at this variant (<code>w_i + w_j == 0</code>, the singleton case), the split defaults to 0.5 / 0.5.</li>
+<strong>Distribute the ambiguous alleles proportionally.</strong> A mixed-pair heterozygote carries exactly one alt allele but its parental origin is unknown, so it’s split between its two parent populations <code>i</code> and <code>j</code> using the conditional ratio <code>w_i / (w_i + w_j)</code> — i.e. in proportion to how often each population’s allele shows up unambiguously elsewhere at this variant. If neither population has unambiguous evidence at this variant (<code>w_i + w_j == 0</code>, the singleton case), GLA shrinkage (see above) supplies the arm’s conditional ancestry ratio for that pair instead of a flat 0.5/0.5 — same idea as the two-population case, generalised per pair.</li>
 </ol>
 <p>With K=2 there’s only one mixed code and one pair, so this reduces exactly to the p1/p2 formulas above.</p>
 </div>
@@ -700,14 +715,14 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </tr></tbody>
 </table>
 <p>Install bcftools via your system package manager:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># macOS</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># macOS</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
 <p>The unphased splitting functions (<code>split_diploid</code>, <code>split_diploid_multi</code>, <code>ancestry_split_dosage</code>) do <strong>not</strong> require bcftools.</p>
 </div>
 <div class="section level3">
