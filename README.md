@@ -71,7 +71,30 @@ All counts are per variant.
 
 $$p_1 = \frac{2N_1 + N_2 + N_4}{D}, \qquad p_2 = \frac{N_4 + 2N_7 + N_8}{D}, \qquad D = 2N_1 + N_2 + 2N_4 + 2N_7 + N_8$$
 
-Special case: if the only alt carriers are AFR/EUR heterozygotes ($N_5 \ge 1$, all other $N = 0$), then $p_1 = p_2 = 0.5$.
+Special case: if the only alt carriers are AFR/EUR heterozygotes ($N_5 \ge 1$, all other $N = 0$), the formula above is undefined ($D = 0$).
+
+**GLA shrinkage.** The formula above only uses evidence *at this variant*:
+it estimates $p_1, p_2$ from unambiguous carriers, then applies that ratio
+to the ambiguous AFR/EUR hets ($N_5$). That's unreliable whenever $N_5$
+dominates the carrier count — not only in the pure singleton above ($D=0$),
+but also just short of it. For example, $N_5 = 10$ with only $N_7 = 1$ (one
+pure-EUR hom-alt) and everything else 0 gives $D = 2$, $p_1 = 0$, $p_2 = 1$
+— a fully confident call extrapolated from a single unambiguous carrier.
+
+`lantern::ancestry_split()` (default `use_gla = TRUE`) shrinks $p_1$ toward
+a per-chromosome-arm **global local ancestry (GLA)** proportion — computed
+directly from the RFMix tracts, not from genotypes — weighted by how much
+of the variant's own evidence is ambiguous:
+
+$$w = \frac{N_5}{N_1+N_2+N_4+N_5+N_7+N_8}, \qquad p_1 \leftarrow (1-w)\,p_1 + w \cdot \mathrm{GLA}_{\mathrm{AFR}}[\mathrm{arm}]$$
+
+$w = 0$ (unambiguous carriers dominate) reduces to the raw formula above;
+$w = 1$ (the pure singleton, $D=0$) falls back entirely to the arm's GLA
+proportion instead of a flat 0.5/0.5 coin flip — the old special case is
+just one end of this continuum. Pass `use_gla = FALSE` to reproduce the
+formula above exactly, including its flat singleton fallback. See the
+`lantern` package [README](lantern/README.md) and
+`vignette("split-intuition")` for the full derivation and worked examples.
 
 ---
 
@@ -140,7 +163,7 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 
 **Interpretation:** $p_k$ estimates the fraction of population-level alt alleles attributable to ancestry $k$, using only observations with unambiguous ancestry.  The mixed-pair hom-alts ($N_{ij}^{(2)}$) contribute one allele to each parent population.  Ambiguous hets in pair $(i,j)$ are then split by the conditional pairwise ratio $p_i / (p_i + p_j)$, i.e. the AFR fraction among AFR and EUR only for an AFR/EUR het, regardless of how many other populations exist.
 
-**Singleton special case:** if the only alt carriers in a mixed pair $(i,j)$ are heterozygotes and all pure-ancestry and hom-alt counts are zero, set $p_i = p_j = 0.5$ for that pair.
+**Singleton special case:** if the only alt carriers in a mixed pair $(i,j)$ are heterozygotes and all pure-ancestry and hom-alt counts are zero, $D=0$ for that pair and the raw ratio is undefined. `ancestry_split()`'s GLA shrinkage (see the 2-ancestry case above) generalises per pair — the pair's ambiguous fraction $w$ blends the raw $p_i/(p_i+p_j)$ ratio toward the chromosome arm's GLA-derived pairwise proportion instead of a flat $p_i = p_j = 0.5$, and reduces to that flat split exactly when `use_gla = FALSE`.
 
 **Number of ancestry types by K:**
 
@@ -161,15 +184,41 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 
 For the 2-ancestry case: pure African $\to p_a$, pure European $\to p_e$, Cauchy combination $\to p_c$.
 
+#### Per-gene ancestry weights for the Cauchy combination
+
+Not every population contributes equally reliable evidence for every gene:
+a gene sitting in a genomic region where only a handful of cohort samples
+have pure ancestry $k$ gives $p_k^{\text{assoc}}$ little to work with, and
+shouldn't count as much as a population with abundant pure-ancestry
+representation there. LANTERN weights each population's p-value by how much
+pure-ancestry evidence backs it *at that specific gene*, rather than
+combining all $p_k$ equally:
+
+$$w_k(\text{gene}) = \operatorname{median}_{v \,\in\, \text{gene}}\bigl(\text{count of cohort samples with pure ancestry } k \text{ at variant } v\bigr)$$
+
+taking the median across the gene's variants (from `ancestry_split()`'s
+`ancestry_counts` output) so a handful of unusually ancestry-rich or
+ancestry-poor variants at the gene's edges don't dominate the estimate.
+These weights feed `cauchy_combine()`:
+
+$$p_c = \mathrm{CCT}\bigl(p_1^{\text{assoc}}, \ldots, p_K^{\text{assoc}};\; w_1, \ldots, w_K\bigr)$$
+
+so a population with little pure-ancestry representation at this gene is
+discounted, not ignored outright — a gene well-represented in one ancestry
+but barely in another naturally leans toward the better-supported
+population's signal. If none of the populations' names match
+`ancestry_counts`'s columns, `ancestry_smmat()` falls back to equal
+weighting across all $K$ populations instead.
 
 ### 4. R Package Installation
 
 The `lantern` R package is on GitHub. It has two categories of dependencies:
 
-- **Bioconductor R packages** — [SeqArray](https://bioconductor.org/packages/SeqArray/) and [SeqVarTools](https://bioconductor.org/packages/SeqVarTools/) are not on CRAN; `devtools::install_github()` will not find them automatically.
+- **Bioconductor R package** — [SeqArray](https://bioconductor.org/packages/SeqArray/) is not on CRAN; `devtools::install_github()` will not find it automatically.
 - **System binary** — the phased-haplotype pipeline shells out to [`bcftools`](https://samtools.github.io/bcftools/) (≥ 1.10) for VCF reading and sample subsetting. Install it via your system package manager (`brew install bcftools` on macOS, `apt install bcftools` on Debian/Ubuntu) before using phased-mode functions.
+- **`GMMAT`** (CRAN) — only needed for Step 2/3 (`ancestry_smmat()`), not for Step 1 splitting alone: `install.packages("GMMAT")`.
 
-**Recommended installation** (handles Bioconductor dependencies):
+**Recommended installation** (handles the Bioconductor dependency):
 
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -178,10 +227,10 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("yuw444/LANTERN/lantern")
 ```
 
-**Alternative**: pre-install Bioconductor dependencies first, then use devtools:
+**Alternative**: pre-install the Bioconductor dependency first, then use devtools:
 
 ```r
-BiocManager::install(c("SeqArray", "SeqVarTools"))
+BiocManager::install("SeqArray")
 devtools::install_github("yuw444/LANTERN", subdir = "lantern")
 ```
 
@@ -201,10 +250,13 @@ computed automatically inside Step 2.
 #### Prerequisites
 
 * The `lantern` R package installed (Section 4 above)
-* `GMMAT` (`pixi run install-cran-gmmat` — not on conda/CRAN mirrors used by pixi)
-* `bcftools` ≥ 1.20 on `PATH`
-* An RFMix2-produced `.msp.tsv` file — see `vignette("generating-local-ancestry")`
-  if you need to produce one from a phased VCF
+* `GMMAT`: `install.packages("GMMAT")` (CRAN). If you're running from a clone
+  of this repo via `pixi`, its conda-forge R environment doesn't have a CRAN
+  mirror configured by default — use `pixi run install-cran-gmmat` instead.
+* `bcftools` ≥ 1.10 on `PATH`
+* An RFMix2-produced `.msp.tsv` file. There's no vignette covering RFMix2
+  itself yet — see [RFMix2's own docs](https://github.com/slowkoni/rfmix)
+  for producing one from a phased VCF + reference panel.
 
 No installation of `./src` itself is needed — just run the scripts with `Rscript`.
 
@@ -226,6 +278,7 @@ Rscript src/step1_vcf_split_by_ancestry.R \
 | `--out_path` | yes | Output directory, created if missing. |
 | `--chr_id` | yes | Chromosome to process, e.g. `22` or `chr22` — must identify the same chromosome in both `--vcf_path` and `--msp_path` (a `chr` prefix mismatch between the two is handled automatically). |
 | `--mode` | no (default `dosage`) | `dosage` = proportional p1/p2 split (unphased-friendly) or `haplotype` = deterministic per-haplotype split (needs a truly phased VCF). See `vignette("split-intuition")` for the difference. |
+| `--use_gla` | no (default `TRUE`) | `--mode dosage` only. Apply GLA shrinkage (see "GLA shrinkage" above) to ambiguous mixed-ancestry heterozygotes. `FALSE` reproduces the original pre-shrinkage p1/p2 estimator exactly, flat singleton fallback included. Ignored for `--mode haplotype`. |
 
 **Multi-chromosome input**: `--vcf_path`/`--msp_path` don't need to be
 pre-split per chromosome — `--chr_id` selects one chromosome out of a
@@ -241,7 +294,7 @@ rather than combining chromosomes into a single call.
 | File | Contents |
 |------|----------|
 | `<POP>.gds` (one per population named in the MSP header, e.g. `AFR.gds`, `EUR.gds`) | Ancestry-specific dosage GDS, ready for `GMMAT::SMMAT()` (`is.dosage = TRUE`) |
-| `split_meta_chr<chr_id>.rds` | `list(gds_paths, variant_info, ancestry_counts, sample_ids, mode, chr_id)` — bundles the GDS paths above plus per-variant ancestry counts. This whole file is Step 2's `--split_meta` input. |
+| `split_meta_chr<chr_id>.rds` | `list(gds_paths, variant_info, ancestry_counts, sample_ids, mode, use_gla, chr_id)` — bundles the GDS paths above plus per-variant ancestry counts. This whole file is Step 2's `--split_meta` input. |
 
 #### Step 2 — ancestry-stratified association testing
 
@@ -279,10 +332,17 @@ Rscript src/step2_association_detection.R \
 * **Gene group** (`--gene_group_file`, no header): `gene, chr, pos, ref,
   alt, weight`, one row per variant per gene.
   ```
-  GOLGA6L22	15	22460882	G	T	1
-  GOLGA6L22	15	22462401	G	C	1
-  HERC2P2	15	22554572	G	A	1
+  GOLGA6L22	chr15	22460882	G	T	1
+  GOLGA6L22	chr15	22462401	G	C	1
+  HERC2P2	chr15	22554572	G	A	1
   ```
+  **The `chr` column must be the exact string your VCF uses for that
+  chromosome** (`chr15` vs `15`) — `GMMAT::SMMAT()` matches variants to
+  genes with plain string equality (`chr:pos:ref:alt`, no `chr`-prefix
+  normalization), unlike `--chr_id` above, which does normalize. A mismatch
+  doesn't error: every gene whose variants fail to match silently drops out
+  of the result entirely. Check with
+  `bcftools view -h your.vcf.gz | grep '^##contig'` if unsure.
 * **Kinship** (`--kinship_rds`): an RDS of a square numeric matrix with
   row and column names equal to sample IDs.
 
