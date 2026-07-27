@@ -91,11 +91,11 @@
       </header><div class="row">
   <div class="contents col-md-9">
 <div class="section level1">
-<div class="page-header"><h1 id="lantern-">LANTERN <img src="reference/figures/logo.png" align="left" height="210" alt="LANTERN logo"><a class="anchor" aria-label="anchor" href="#lantern-"></a>
+<div class="page-header"><h1 id="lantern">LANTERN<a class="anchor" aria-label="anchor" href="#lantern"></a>
 </h1></div>
 <p><strong>L</strong>everaging Local <strong>AN</strong>cestry <strong>T</strong>racts to <strong>E</strong>nhance <strong>R</strong>are-Varia<strong>N</strong>t Aggregate Association Testing</p>
 <p><a href="https://yuw444.github.io/LANTERN/"><img src="https://img.shields.io/badge/docs-pkgdown-blue" alt="pkgdown site"></a> <a href="https://github.com/yuw444/LANTERN" class="external-link"><img src="https://img.shields.io/badge/source-GitHub-lightgrey" alt="GitHub"></a></p>
-<p>Full documentation, vignettes, and function reference: <strong><a href="https://yuw444.github.io/LANTERN/" class="uri">https://yuw444.github.io/LANTERN/</a></strong>. MedRxiv: <a href="https://www.medrxiv.org/content/10.64898/2026.04.24.26351693v1.full.pdf" class="external-link">2026.04. 24.26351693</a></p>
+<p>Full documentation, vignettes, and function reference: <strong><a href="https://yuw444.github.io/LANTERN/">https://yuw444.github.io/LANTERN/</a></strong>. MedRxiv: <a href="https://www.medrxiv.org/content/10.64898/2026.04.24.26351693v1.full.pdf" class="external-link">2026.04. 24.26351693</a></p>
 <div class="section level2">
 <h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
 </h2>
@@ -115,15 +115,15 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>SeqArray and SeqVarTools are Bioconductor packages and are not found by <code>devtools::install_github()</code> automatically. Use BiocManager to handle all dependencies in one step:</p>
+<p>SeqArray is a Bioconductor package and is not found by <code>devtools::install_github()</code> automatically. Use BiocManager to handle dependencies in one step:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"yuw444/LANTERN/lantern"</span><span class="op">)</span></span></code></pre></div>
-<p>Or pre-install the Bioconductor packages first, then use devtools:</p>
+<p>Or pre-install the Bioconductor dependency first, then use devtools:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SeqArray"</span>, <span class="st">"SeqVarTools"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"SeqArray"</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"yuw444/LANTERN"</span>, subdir <span class="op">=</span> <span class="st">"lantern"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -302,9 +302,9 @@
 <p>This writes several sibling files sharing the <code>LANTERN_chr19</code> prefix; LANTERN only reads the <code>.msp.tsv.gz</code>:</p>
 <table class="table">
 <colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
+<col width="8%">
+<col width="42%">
+<col width="49%">
 </colgroup>
 <thead><tr>
 <th>File</th>
@@ -326,7 +326,7 @@
 </tr>
 <tr>
 <td><code>*.rfmix.Q.gz</code></td>
-<td>Global (genome-wide) ancestry proportion per sample, ADMIXTURE-style <code>.Q</code> format</td>
+<td>Global (genome-wide) ancestry proportion per sample, ADMIXTURE-style<code>.Q</code> format</td>
 <td>No</td>
 </tr>
 <tr>
@@ -431,8 +431,8 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 <p>Parse VCF/MSP files (or accept pre-built matrices) and run a full ancestry split.</p>
 <table class="table">
 <colgroup>
-<col width="43%">
-<col width="56%">
+<col width="22%">
+<col width="77%">
 </colgroup>
 <thead><tr>
 <th>Function</th>
@@ -441,7 +441,7 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 <tbody>
 <tr>
 <td><code>ancestry_split_dosage(gt, pt, ...)</code></td>
-<td>Full pipeline: proportional dosage split of a genotype matrix by parent-of-origin ancestry, with automatic sample/variant overlap handling. Accepts matrices directly, or a <code>vcf_path</code>/<code>msp_path</code> shortcut.</td>
+<td>Full pipeline: proportional dosage split of a genotype matrix by parent-of-origin ancestry, with automatic sample/variant overlap handling. Accepts matrices directly, or a<code>vcf_path</code>/<code>msp_path</code> shortcut.</td>
 </tr>
 <tr>
 <td><code>ancestry_split_phased(vcf_path, msp_path, out_path, ...)</code></td>
@@ -460,8 +460,8 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 <p>Matrix-in, matrix-out primitives (C backend), used internally by the pipelines above but also usable directly.</p>
 <table class="table">
 <colgroup>
-<col width="43%">
-<col width="56%">
+<col width="36%">
+<col width="63%">
 </colgroup>
 <thead><tr>
 <th>Function</th>
@@ -474,7 +474,7 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </tr>
 <tr>
 <td><code>split_diploid_multi(gt, ancestry, pure_codes, mixed_codes)</code></td>
-<td>K-population generalisation of <code>split_diploid</code>.</td>
+<td>K-population generalisation of<code>split_diploid</code>.</td>
 </tr>
 <tr>
 <td><code>split_haplotype(gt_hap0, gt_hap1, anc_hap0, anc_hap1, pop_codes)</code></td>
@@ -482,7 +482,7 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </tr>
 <tr>
 <td><code>split_haplotype_multi(gt_hap0, gt_hap1, anc_hap0, anc_hap1, pop_codes)</code></td>
-<td>K-population generalisation of <code>split_haplotype</code>.</td>
+<td>K-population generalisation of<code>split_haplotype</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -506,7 +506,7 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </tr>
 <tr>
 <td><code>write_dosage_gds(dosage_mat, variant_info, sample_ids, gds_path)</code></td>
-<td>Convert an ancestry-specific dosage matrix to a SeqArray GDS file (for <code><a href="https://rdrr.io/pkg/GMMAT/man/SMMAT.html" class="external-link">GMMAT::SMMAT()</a></code>).</td>
+<td>Convert an ancestry-specific dosage matrix to a SeqArray GDS file (for<code><a href="https://rdrr.io/pkg/GMMAT/man/SMMAT.html" class="external-link">GMMAT::SMMAT()</a></code>).</td>
 </tr>
 </tbody>
 </table>
@@ -516,8 +516,8 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </h3>
 <table class="table">
 <colgroup>
-<col width="43%">
-<col width="56%">
+<col width="29%">
+<col width="70%">
 </colgroup>
 <thead><tr>
 <th>Function</th>
@@ -641,17 +641,31 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </div>
 </div>
 <div class="section level2">
+<h2 id="association-testing">Association Testing<a class="anchor" aria-label="anchor" href="#association-testing"></a>
+</h2>
+<p><code><a href="reference/ancestry_smmat.html">ancestry_smmat()</a></code> (Step 3) runs <code><a href="https://rdrr.io/pkg/GMMAT/man/SMMAT.html" class="external-link">GMMAT::SMMAT()</a></code> once per population’s GDS file (plus, typically, once more on the unsplit “observed” GT GDS), then combines the per-population p-values into a single gene-level result with <code><a href="reference/cauchy_combine.html">cauchy_combine()</a></code>.</p>
+<div class="section level3">
+<h3 id="why-per-population-p-values-arent-combined-equally">Why per-population p-values aren’t combined equally<a class="anchor" aria-label="anchor" href="#why-per-population-p-values-arent-combined-equally"></a>
+</h3>
+<p>Not every population contributes equally reliable evidence for every gene. A gene sitting in a genomic region where only a handful of cohort samples have <em>pure</em> ancestry <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math> gives that population’s SMMAT p-value little to work with, and shouldn’t count as much as a population with abundant pure-ancestry representation there. So instead of feeding <code><a href="reference/cauchy_combine.html">cauchy_combine()</a></code> equal weights, <code><a href="reference/ancestry_smmat.html">ancestry_smmat()</a></code> weights each population’s p-value by how much pure-ancestry evidence backs it <em>at that specific gene</em>:</p>
+<pre><code>w_k(gene) = median over the gene's variants of:
+              (count of cohort samples with pure ancestry k at that variant)</code></pre>
+<p>using the <strong>median</strong> across the gene’s variants — from <code><a href="reference/ancestry_split.html">ancestry_split()</a></code>‘s <code>ancestry_counts</code> output — rather than, say, the mean, so a handful of unusually ancestry-rich or ancestry-poor variants at the gene’s edges don’t dominate the estimate. A population with little pure-ancestry representation at this gene is discounted, not ignored outright — a gene well-represented in one ancestry but barely in another naturally leans toward the better-supported population’s signal in the combined p-value. If none of the populations’ names match <code>ancestry_counts</code>’s columns (e.g. it wasn’t supplied), <code><a href="reference/ancestry_smmat.html">ancestry_smmat()</a></code> falls back to equal weighting across all K populations instead.</p>
+<p>This weight computation happens automatically inside <code><a href="reference/ancestry_smmat.html">ancestry_smmat()</a></code> — there’s no separate weight-finding step to run. See <code><a href="reference/ancestry_smmat.html">?ancestry_smmat</a></code> for the full argument/return-value reference.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
 </h2>
 <div class="section level3">
 <h3 id="r-packages">R packages<a class="anchor" aria-label="anchor" href="#r-packages"></a>
 </h3>
-<table class="table">
+<table style="width:100%;" class="table">
 <colgroup>
-<col width="30%">
-<col width="20%">
-<col width="26%">
-<col width="23%">
+<col width="58%">
+<col width="8%">
+<col width="11%">
+<col width="21%">
 </colgroup>
 <thead><tr>
 <th>Package</th>
@@ -673,12 +687,6 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 <td>GDS file I/O</td>
 </tr>
 <tr>
-<td><a href="https://bioconductor.org/packages/SeqVarTools/" class="external-link">SeqVarTools</a></td>
-<td>Required</td>
-<td>Bioconductor</td>
-<td>Variant iteration</td>
-</tr>
-<tr>
 <td><a href="https://cran.r-project.org/package=GMMAT" class="external-link">GMMAT</a></td>
 <td>Suggested</td>
 <td>CRAN</td>
@@ -692,16 +700,16 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </tr>
 </tbody>
 </table>
-<p><strong>Bioconductor packages are not installed automatically by <code>devtools::install_github()</code>.</strong> Use the <code>BiocManager</code> installation instructions above.</p>
+<p><strong>Bioconductor packages (SeqArray) are not installed automatically by <code>devtools::install_github()</code>.</strong> Use the <code>BiocManager</code> installation instructions above.</p>
 </div>
 <div class="section level3">
 <h3 id="system-tools">System tools<a class="anchor" aria-label="anchor" href="#system-tools"></a>
 </h3>
 <table class="table">
 <colgroup>
-<col width="21%">
-<col width="32%">
-<col width="46%">
+<col width="31%">
+<col width="4%">
+<col width="64%">
 </colgroup>
 <thead><tr>
 <th>Tool</th>
@@ -711,18 +719,18 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 <tbody><tr>
 <td><a href="https://samtools.github.io/bcftools/" class="external-link"><code>bcftools</code></a></td>
 <td>≥ 1.10</td>
-<td>Phased-mode functions only (<code>read_phased_vcf</code>, <code>ancestry_split_phased</code>, <code>filter_phased_vcf_samples</code>)</td>
+<td>VCF/BCF-reading functions only (<code><a href="reference/ancestry_split.html">ancestry_split()</a></code>, <code><a href="reference/ancestry_split_phased.html">ancestry_split_phased()</a></code>) — not needed for the matrix-in/matrix-out functions (<code><a href="reference/split_diploid.html">split_diploid()</a></code>, <code><a href="reference/ancestry_split_dosage.html">ancestry_split_dosage()</a></code>, etc.)</td>
 </tr></tbody>
 </table>
 <p>Install bcftools via your system package manager:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># macOS</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># macOS</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
 <p>The unphased splitting functions (<code>split_diploid</code>, <code>split_diploid_multi</code>, <code>ancestry_split_dosage</code>) do <strong>not</strong> require bcftools.</p>
 </div>
 <div class="section level3">
