@@ -39,7 +39,7 @@ option_list <- list(
     c("--out_file"),
     type = "character",
     default = NULL,
-    help = "Output path to RDS file",
+    help = "Output TSV path for the per-gene results table (gene, p_<POP>, w_<POP>, p_cauchy columns). A sibling RDS with the same basename (extension swapped to .rds) is also written alongside it, containing ancestry_smmat()'s full return value (list(results, smmat_results)) for anyone who needs the raw per-population GMMAT::SMMAT() output too.",
     metavar = "file"
   ),
   make_option(
@@ -118,9 +118,16 @@ result <- ancestry_smmat(
   ncores          = ncores
 )
 
-saveRDS(result, file = opt$out_file)
+fwrite(result$results, opt$out_file, sep = "\t")
 message(
   "Wrote: ", opt$out_file,
-  " (list(results = <per-gene p_<POP>/w_<POP>/p_cauchy>,",
+  " (per-gene p_<POP>/w_<POP>/p_cauchy table, tab-separated)"
+)
+
+rds_file <- paste0(tools::file_path_sans_ext(opt$out_file), ".rds")
+saveRDS(result, file = rds_file)
+message(
+  "Wrote: ", rds_file,
+  " (list(results = <same table as the TSV above>,",
   " smmat_results = <raw GMMAT::SMMAT() output per population>))"
 )

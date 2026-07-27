@@ -305,7 +305,7 @@ Rscript src/step2_association_detection.R \
   --gene_group_file genes.tsv \
   --kinship_rds     kinship.rds \
   --response_type   continuous \
-  --out_file        results.rds \
+  --out_file        results.tsv \
   --ncores          8
 ```
 
@@ -316,7 +316,7 @@ Rscript src/step2_association_detection.R \
 | `--gene_group_file` | yes | Gene-group file passed straight to `GMMAT::SMMAT()` — see format below. |
 | `--kinship_rds` | yes | Kinship matrix RDS — see format below. |
 | `--response_type` | no (default `continuous`) | `continuous` (`gaussian`), `binary` (`binomial`), or `count` (`poisson`). |
-| `--out_file` | yes | Output RDS path. |
+| `--out_file` | yes | Output TSV path — see Output below. |
 | `--ncores` | no | Cores for `GMMAT::SMMAT()`. Defaults to `$SLURM_CPUS_PER_TASK` when set (i.e. automatically picks up `--cpus-per-task` in a SLURM job), else `1`. Pass explicitly to override. |
 
 **Input file formats**:
@@ -332,24 +332,30 @@ Rscript src/step2_association_detection.R \
 * **Gene group** (`--gene_group_file`, no header): `gene, chr, pos, ref,
   alt, weight`, one row per variant per gene.
   ```
-  GOLGA6L22	chr15	22460882	G	T	1
-  GOLGA6L22	chr15	22462401	G	C	1
-  HERC2P2	chr15	22554572	G	A	1
+  GOLGA6L22	15	22460882	G	T	1
+  GOLGA6L22	15	22462401	G	C	1
+  HERC2P2	15	22554572	G	A	1
   ```
-  **The `chr` column must be the exact string your VCF uses for that
-  chromosome** (`chr15` vs `15`) — `GMMAT::SMMAT()` matches variants to
-  genes with plain string equality (`chr:pos:ref:alt`, no `chr`-prefix
-  normalization), unlike `--chr_id` above, which does normalize. A mismatch
-  doesn't error: every gene whose variants fail to match silently drops out
-  of the result entirely. Check with
-  `bcftools view -h your.vcf.gz | grep '^##contig'` if unsure.
+  **The `chr` column must be a bare chromosome number/name with no `chr`
+  prefix** (`15`, not `chr15`) — regardless of whether your original VCF
+  uses `chr15` or `15` internally. Step 1's GDS files are written via
+  `SeqArray::seqVCF2GDS()`, which always strips any `chr` prefix when it
+  stores the chromosome field; `GMMAT::SMMAT()` then matches variants to
+  genes by plain string equality (`chr:pos:ref:alt`) against exactly that
+  stripped value. A mismatch doesn't error: every gene whose variants fail
+  to match silently drops out of the result entirely.
 * **Kinship** (`--kinship_rds`): an RDS of a square numeric matrix with
   row and column names equal to sample IDs.
 
-**Output** (`--out_file`): an RDS of `ancestry_smmat()`'s return value —
-`list(results, smmat_results)`:
-* `results` — data.frame, one row per gene: `gene`, one `p_<POP>` and one
-  `w_<POP>` column per population (e.g. `p_AFR`, `w_AFR`, `p_EUR`,
-  `w_EUR`), and `p_cauchy` (the combined p-value).
-* `smmat_results` — named list (one entry per population) of the raw
-  `GMMAT::SMMAT()` output data.frames, for anyone who needs the full detail.
+**Output**: two files, both derived from `--out_file`:
+* `--out_file` itself — the per-gene results table as tab-separated text
+  (via `data.table::fwrite()`): `gene`, one `p_<POP>` and one `w_<POP>`
+  column per population (e.g. `p_AFR`, `w_AFR`, `p_EUR`, `w_EUR`), and
+  `p_cauchy` (the combined p-value). This is `ancestry_smmat()`'s
+  `results` data.frame, and the one most people want.
+* `<out_file, .tsv swapped for .rds>` — an RDS of `ancestry_smmat()`'s
+  full return value, `list(results, smmat_results)`, where `results` is
+  the same table as the TSV above and `smmat_results` is a named list (one
+  entry per population) of the raw `GMMAT::SMMAT()` output data.frames —
+  for anyone who needs the full per-gene detail (variant counts,
+  missingness, MAF range, etc.) beyond just the p-values.
