@@ -236,16 +236,20 @@ devtools::install_github("yuw444/LANTERN", subdir = "lantern")
 
 ### 5. Pipeline (legacy `./src`)
 
-Two SLURM-friendly CLI scripts (`step1_vcf_split_by_ancestry.R`,
-`step2_association_detection.R`) that wrap the `lantern` R package —
-`optparse` argument parsing and file I/O around
-`lantern::ancestry_split()` / `write_ancestry_gds()` / `ancestry_smmat()`.
-Use these if you want each step as its own SLURM job; if you're scripting
-in R directly, just call the package functions yourself (see
-`vignette("split-intuition")`, `vignette("toy-vcf-msp-example")`,
-`vignette("real-data-chr19")`). There is no separate weight-finding
-script — per-gene ancestry weights for the Cauchy combination are
-computed automatically inside Step 2.
+Three SLURM-friendly CLI scripts (`step0_observed_association.R`,
+`step1_vcf_split_by_ancestry.R`, `step2_association_detection.R`). Step 1
+and Step 2 wrap the `lantern` R package — `optparse` argument parsing and
+file I/O around `lantern::ancestry_split()` / `write_ancestry_gds()` /
+`ancestry_smmat()`. Step 0 calls `GMMAT::glmmkin()`/`GMMAT::SMMAT()`
+directly (no `lantern` calls) to produce $p_{obs}$, the plain,
+non-ancestry-split association p-value from the "Association Detection"
+section above — it is entirely independent of Steps 1/2 and of each
+other's outputs; run any subset, in any order. Use these if you want each
+step as its own SLURM job; if you're scripting in R directly, just call
+the package functions yourself (see `vignette("split-intuition")`,
+`vignette("toy-vcf-msp-example")`, `vignette("real-data-chr19")`). There
+is no separate weight-finding script — per-gene ancestry weights for the
+Cauchy combination are computed automatically inside Step 2.
 
 #### Prerequisites
 
@@ -259,6 +263,50 @@ computed automatically inside Step 2.
   for producing one from a phased VCF + reference panel.
 
 No installation of `./src` itself is needed — just run the scripts with `Rscript`.
+
+#### Step 0 — plain association test on observed (unsplit) genotypes
+
+```bash
+Rscript src/step0_observed_association.R \
+  --vcf_path        cohort.phased.vcf.gz \
+  --chr_id          22 \
+  --out_path        out/ \
+  --data_file       pheno.tsv \
+  --gene_group_file genes.tsv \
+  --kinship_rds     kinship.rds \
+  --response_type   continuous \
+  --out_file        out/observed_results.tsv \
+  --ncores          8
+```
+
+Converts `--vcf_path` (filtered to `--chr_id`) directly to
+`out/OBSERVED.gds` via `SeqArray::seqVCF2GDS()` — true hard-call
+genotypes read straight from the input file, no ancestry-split dosage
+reconstruction — then fits its own null model (`GMMAT::glmmkin()`) and
+runs a plain `GMMAT::SMMAT(..., is.dosage = FALSE)` on it. This is
+$p_{obs}$ from the "Association Detection" section above: the ordinary,
+non-ancestry-aware rare-variant test, for comparison against the
+ancestry-stratified Step 1/Step 2 results.
+
+| Flag | Required | Meaning |
+|------|----------|---------|
+| `--vcf_path` / `-i` | yes | Same phased VCF/BCF you'd pass to Step 1's `--vcf_path`. |
+| `--chr_id` / `-c` | yes | Chromosome to process, must match `--vcf_path`'s `CHROM` column (e.g. `22` or `chr22`, tried both ways). |
+| `--out_path` / `-o` | yes | Output directory (created if missing); `OBSERVED.gds` is written here. |
+| `--data_file` | yes | Phenotype file — same format as Step 2's. |
+| `--gene_group_file` | yes | Gene-group file passed straight to `GMMAT::SMMAT()` — same format as Step 2's. |
+| `--kinship_rds` | yes | Kinship matrix RDS — same format as Step 2's. |
+| `--response_type` | no (default `continuous`) | `continuous` (`gaussian`), `binary` (`binomial`), or `count` (`poisson`). |
+| `--out_file` | yes | Output TSV path — see Output below. |
+| `--ncores` | no | Cores for `GMMAT::SMMAT()`. Defaults to `$SLURM_CPUS_PER_TASK` when set, else `1`. |
+
+**Output**: `out/OBSERVED.gds` plus two files derived from `--out_file`:
+* `--out_file` itself — a two-column tab-separated table, `gene` and
+  `p_OBSERVED`.
+* `<out_file, .tsv swapped for .rds>` — an RDS of
+  `list(results, smmat_results)`, where `results` is the same table as the
+  TSV above and `smmat_results` is the raw `GMMAT::SMMAT()` output
+  data.frame.
 
 #### Step 1 — split a VCF by local ancestry
 
