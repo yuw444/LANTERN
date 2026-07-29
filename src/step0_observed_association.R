@@ -179,11 +179,27 @@ message("Fitting null model (glmmkin)...")
 model0 <- GMMAT::glmmkin(formula_to_fit, data = pheno_sub, kins = kin_sub,
                           id = "id", family = family_to_use)
 
+# Normalize --gene_group_file's chr column (strip any leading "chr") into a
+# fresh temp copy -- never opt$gene_group_file itself. SeqArray::
+# seqVCF2GDS() always strips "chr" when writing GDS files, so
+# GMMAT::SMMAT()'s own chr:pos:ref:alt string matching against OBSERVED.gds
+# silently drops every variant (and the whole gene, if all its variants are
+# affected) whenever --gene_group_file uses a "chr19" convention instead of
+# a bare "19" -- no fuzzy/positional alignment is attempted. Using a fresh
+# tempfile also means --gene_group_file is never modified or deleted.
+gg_df <- fread(opt$gene_group_file, header = FALSE)
+if (ncol(gg_df) != 6)
+  stop("--gene_group_file must have exactly 6 columns: gene, chr, pos, ref, alt, weight")
+gg_df[[2]] <- sub("^chr", "", as.character(gg_df[[2]]))
+gg_tmp <- tempfile(fileext = ".tsv")
+fwrite(gg_df, gg_tmp, sep = "\t", col.names = FALSE)
+
 message("Running GMMAT::SMMAT() on observed (unsplit) genotypes...")
-smmat_observed <- GMMAT::SMMAT(model0, observed_gds, opt$gene_group_file,
+smmat_observed <- GMMAT::SMMAT(model0, observed_gds, gg_tmp,
                                 MAF.range = c(0, 0.5), miss.cutoff = 1,
                                 method = "davies", is.dosage = FALSE,
                                 ncores = ncores)
+unlink(gg_tmp)
 
 results <- data.frame(
   gene       = as.character(smmat_observed$group),

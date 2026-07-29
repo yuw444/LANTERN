@@ -31,3 +31,6 @@ lantern.Rcmdcheck/
 AGENTS.md
 
 ./test/1000G
+
+# Ad hoc smoke-test scratch (fixtures/output for manually testing src/*.R)
+SMOKE/
