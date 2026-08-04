@@ -124,6 +124,12 @@ $$p_1 = \frac{2N_1 + N_2 + N_7 + N_9}{D}, \quad p_2 = \frac{2N_3 + N_4 + N_7 + N
 
 By construction $p_1 + p_2 + p_3 = 1$.  Each mixed hom-alt individual (e.g. $N_7$, AFR/EUR 1/1) contributes one alt allele to each parent population's numerator and two to the shared denominator $D$.  Ambiguous hets in each mixed pair are then split by the **pairwise ratio** of the two parent populations' proportions.
 
+**GLA shrinkage.** Each mixed pair's ambiguous heterozygote count ($N_8$ for AFR/EUR, $N_{10}$ for AFR/NAT, $N_{12}$ for EUR/NAT) is shrunk the same way as the 2-ancestry case, toward the chromosome arm's GLA proportion conditioned on just that pair. For the AFR/EUR pair:
+
+$$w_{12} = \frac{N_8}{N_1+\cdots+N_{12}}, \qquad \mathrm{GLA}_{AFR\mid 12}[\mathrm{arm}] = \frac{\mathrm{GLA}_{AFR}[\mathrm{arm}]}{\mathrm{GLA}_{AFR}[\mathrm{arm}] + \mathrm{GLA}_{EUR}[\mathrm{arm}]} \; (=0.5 \text{ if both are } 0), \qquad \frac{p_1}{p_1+p_2} \leftarrow (1-w_{12})\frac{p_1}{p_1+p_2} + w_{12}\cdot \mathrm{GLA}_{AFR\mid 12}[\mathrm{arm}]$$
+
+and this shrunk ratio replaces $N_8$'s $\mathbf{x}_{AFR}/\mathbf{x}_{EUR}$ split above ($\mathbf{x}_{EUR} = 1 - \mathbf{x}_{AFR}$). $N_{10}$ (AFR/NAT) and $N_{12}$ (EUR/NAT) shrink identically, each toward its own pair's GLA-conditioned target. As in the 2-ancestry case, $w=1$ (a pair's only evidence is its own ambiguous hets) falls back entirely to the GLA-conditioned ratio instead of a flat 0.5/0.5, and `use_gla = FALSE` reproduces the raw pairwise ratio exactly.
+
 ---
 
 #### General K-Ancestry Case
@@ -163,7 +169,13 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 
 **Interpretation:** $p_k$ estimates the fraction of population-level alt alleles attributable to ancestry $k$, using only observations with unambiguous ancestry.  The mixed-pair hom-alts ($N_{ij}^{(2)}$) contribute one allele to each parent population.  Ambiguous hets in pair $(i,j)$ are then split by the conditional pairwise ratio $p_i / (p_i + p_j)$, i.e. the AFR fraction among AFR and EUR only for an AFR/EUR het, regardless of how many other populations exist.
 
-**Singleton special case:** if the only alt carriers in a mixed pair $(i,j)$ are heterozygotes and all pure-ancestry and hom-alt counts are zero, $D=0$ for that pair and the raw ratio is undefined. `ancestry_split()`'s GLA shrinkage (see the 2-ancestry case above) generalises per pair — the pair's ambiguous fraction $w$ blends the raw $p_i/(p_i+p_j)$ ratio toward the chromosome arm's GLA-derived pairwise proportion instead of a flat $p_i = p_j = 0.5$, and reduces to that flat split exactly when `use_gla = FALSE`.
+**Singleton special case:** if the only alt carriers in a mixed pair $(i,j)$ are heterozygotes and all pure-ancestry and hom-alt counts are zero, $D=0$ for that pair and the raw ratio is undefined.
+
+**GLA shrinkage (general $K$).** The formula above generalises **per pair**, not per population: each mixed pair $(i,j)$ gets its own ambiguous-fraction weight and its own shrinkage target, the arm's GLA proportions conditioned on just that pair.
+
+$$w_{ij} = \frac{N_{ij}^{(1)}}{\text{total alt-carriers at this variant (all pure + mixed types)}}, \qquad \mathrm{GLA}_{i\mid ij}[\mathrm{arm}] = \frac{\mathrm{GLA}_i[\mathrm{arm}]}{\mathrm{GLA}_i[\mathrm{arm}] + \mathrm{GLA}_j[\mathrm{arm}]} \; (=0.5 \text{ if both are } 0), \qquad \frac{p_i}{p_i+p_j} \leftarrow (1-w_{ij})\frac{p_i}{p_i+p_j} + w_{ij}\cdot \mathrm{GLA}_{i\mid ij}[\mathrm{arm}]$$
+
+using the same $p_i$ from the population-proportion formula above (the full-variant estimate, not a pair-restricted recount) — so the raw ratio is defined even when pair $(i,j)$ itself has no unambiguous hom-alt carriers, as long as $i$ and $j$ each have unambiguous evidence elsewhere in the variant; it falls back to $\mathrm{GLA}_{i\mid ij}$ only if $p_i+p_j=0$ too. $w_{ij}=0$ recovers the raw pairwise ratio; $w_{ij}=1$ (pair $(i,j)$'s only alt carriers are its own ambiguous hets — the singleton case above) falls back entirely to $\mathrm{GLA}_{i\mid ij}[\mathrm{arm}]$ instead of a flat 0.5/0.5. `use_gla = FALSE` reproduces the raw per-pair ratio exactly, flat-0.5 fallback included.
 
 **Number of ancestry types by K:**
 
