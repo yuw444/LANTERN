@@ -667,15 +667,32 @@ informing 100” — it takes whatever ratio it computes at face value,
 regardless of how little evidence backs it.</p>
 <p><strong>GLA (global local ancestry) shrinkage</strong> fixes both
 this case and the pure singleton with one mechanism: discount the raw
-ratio in proportion to how much of a variant’s evidence is actually
-ambiguous, and fill in the rest from the chromosome arm’s
-independently-estimated ancestry mixture:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mfrac><mtext mathvariant="normal">ambiguous carriers</mtext><mtext mathvariant="normal">all alt-carriers at this variant</mtext></mfrac><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>p</mi><mi>k</mi></msub><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><msubsup><mi>p</mi><mi>k</mi><mtext mathvariant="normal">raw</mtext></msubsup><mo>+</mo><mi>w</mi><mo>⋅</mo><msub><mtext mathvariant="normal">GLA</mtext><mi>k</mi></msub><mo stretchy="false" form="prefix">[</mo><mtext mathvariant="normal">arm</mtext><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">w = \frac{\text{ambiguous carriers}}{\text{all alt-carriers at this variant}}, \qquad
-p_k = (1-w)\,p_k^{\text{raw}} + w \cdot \text{GLA}_k[\text{arm}]</annotation></semantics></math></p>
-<p><code>w = 0</code> (unambiguous carriers dominate) reduces to exactly
-the raw formula from Parts A/B. <code>w = 1</code> (the pure singleton)
-falls back entirely to the arm’s GLA proportion — not a coin flip;
-that’s just one end of this continuum, not a separate mechanism.
+<em>pairwise</em> ratio in proportion to how much of a variant’s
+evidence is actually ambiguous <strong>for that specific pair</strong>,
+and fill in the rest from the chromosome arm’s independently-estimated
+ancestry mixture, renormalised to just the two populations in the pair.
+For the mixed pair <code>(i,j)</code> behind a given ambiguous het
+(here, AFR/EUR):</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mfrac><mrow><mrow><mtext mathvariant="normal">pair </mtext><mspace width="0.333em"></mspace></mrow><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mtext mathvariant="normal">’s ambiguous-het count</mtext></mrow><mtext mathvariant="normal">all alt-carriers at this variant, any category</mtext></mfrac><mo>,</mo><mspace width="2.0em"></mspace><mfrac><msub><mi>p</mi><mi>i</mi></msub><mrow><msub><mi>p</mi><mi>i</mi></msub><mo>+</mo><msub><mi>p</mi><mi>j</mi></msub></mrow></mfrac><mspace width="0.278em"></mspace><mo>←</mo><mspace width="0.278em"></mspace><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>w</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mfrac><msubsup><mi>p</mi><mi>i</mi><mtext mathvariant="normal">raw</mtext></msubsup><mrow><msubsup><mi>p</mi><mi>i</mi><mtext mathvariant="normal">raw</mtext></msubsup><mo>+</mo><msubsup><mi>p</mi><mi>j</mi><mtext mathvariant="normal">raw</mtext></msubsup></mrow></mfrac><mo>+</mo><msub><mi>w</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>⋅</mo><mfrac><mrow><msub><mtext mathvariant="normal">GLA</mtext><mi>i</mi></msub><mo stretchy="false" form="prefix">[</mo><mtext mathvariant="normal">arm</mtext><mo stretchy="false" form="postfix">]</mo></mrow><mrow><msub><mtext mathvariant="normal">GLA</mtext><mi>i</mi></msub><mo stretchy="false" form="prefix">[</mo><mtext mathvariant="normal">arm</mtext><mo stretchy="false" form="postfix">]</mo><mo>+</mo><msub><mtext mathvariant="normal">GLA</mtext><mi>j</mi></msub><mo stretchy="false" form="prefix">[</mo><mtext mathvariant="normal">arm</mtext><mo stretchy="false" form="postfix">]</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">w_{ij} = \frac{\text{pair } (i,j)\text{'s ambiguous-het count}}{\text{all alt-carriers at this variant, any category}}, \qquad
+\frac{p_i}{p_i+p_j} \;\leftarrow\; (1-w_{ij})\,\frac{p_i^{\text{raw}}}{p_i^{\text{raw}}+p_j^{\text{raw}}} + w_{ij} \cdot \frac{\text{GLA}_i[\text{arm}]}{\text{GLA}_i[\text{arm}]+\text{GLA}_j[\text{arm}]}</annotation></semantics></math></p>
+<p>Blending against the pair-renormalised GLA ratio — rather than each
+population’s raw <code>GLA_k[arm]</code> directly — matters once K &gt;
+2: it guarantees an ambiguous AFR/EUR het never receives any dosage
+toward a third population like NAT, however strongly shrinkage applies.
+The example below confirms this: <code>NAT total</code> stays exactly 0
+even though <code>GLA_NAT[arm] = 0.05 &gt; 0</code> — a formula that
+blended each <code>p_k</code> toward its raw <code>GLA_k[arm]</code>
+directly (instead of the pair-renormalised ratio above) would
+incorrectly leak some dosage to NAT here. For K = 2, where
+<code>GLA_AFR[arm] + GLA_EUR[arm] = 1</code> by construction, the
+pair-renormalised target collapses to plain <code>GLA_AFR[arm]</code>
+and this formula reduces to the simpler two-population case from Part
+A.</p>
+<p><code>w_ij = 0</code> (pair <code>(i,j)</code>’s own unambiguous
+carriers dominate) reduces to exactly the raw pairwise ratio from Parts
+A/B. <code>w_ij = 1</code> (the pure singleton for that pair) falls back
+entirely to the pair’s GLA-conditioned ratio — not a coin flip; that’s
+just one end of this continuum, not a separate mechanism.
 <code>GLA_k[arm]</code> itself is computed once per chromosome arm
 (split at the centromere) directly from the MSP ancestry
 <strong>tracts</strong>, not from genotypes or phase, so it stays

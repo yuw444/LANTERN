@@ -616,12 +616,14 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </h4>
 <p>With more than two source populations, each mixed ancestry code names an <em>unordered pair</em> of parent populations (e.g. code 5 = AFR/NAT). The algorithm generalises p1/p2 to K populations in two passes per variant:</p>
 <ol style="list-style-type: decimal">
+<li><p><strong>Build a per-population proportion from unambiguous carriers.</strong> A pure homozygous-alt sample contributes 2 alleles to its own population’s count; a pure heterozygote contributes 1; and — the key unambiguous case — a <strong>mixed-pair homozygous-alt</strong> sample contributes exactly 1 allele to <em>each</em> of its two parent populations, because carrying two alt copies with ancestry split between two populations means one copy must have come from each side. Dividing by the variant’s total unambiguous alt-allele count gives <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>p</mi><mi>K</mi></msub></mrow><annotation encoding="application/x-tex">p_1, \ldots, p_K</annotation></semantics></math> (summing to 1).</p></li>
 <li>
-<strong>Build a per-population weight from unambiguous carriers.</strong> A pure homozygous-alt sample contributes 2 alleles to its own population’s weight; a pure heterozygote contributes 1; and — the key unambiguous case — a <strong>mixed-pair homozygous-alt</strong> sample contributes exactly 1 allele to <em>each</em> of its two parent populations, because carrying two alt copies with ancestry split between two populations means one copy must have come from each side.</li>
-<li>
-<strong>Distribute the ambiguous alleles proportionally.</strong> A mixed-pair heterozygote carries exactly one alt allele but its parental origin is unknown, so it’s split between its two parent populations <code>i</code> and <code>j</code> using the conditional ratio <code>w_i / (w_i + w_j)</code> — i.e. in proportion to how often each population’s allele shows up unambiguously elsewhere at this variant. If neither population has unambiguous evidence at this variant (<code>w_i + w_j == 0</code>, the singleton case), GLA shrinkage (see above) supplies the arm’s conditional ancestry ratio for that pair instead of a flat 0.5/0.5 — same idea as the two-population case, generalised per pair.</li>
+<p><strong>Distribute the ambiguous alleles proportionally, per pair.</strong> A mixed-pair heterozygote in pair <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i,j)</annotation></semantics></math> carries exactly one alt allele but its parental origin is unknown, so it’s split using the conditional ratio <code>p_i / (p_i + p_j)</code> — in proportion to how often <em>just those two</em> populations’ alleles show up unambiguously elsewhere at this variant. GLA shrinkage (see above) generalises <strong>per pair</strong>, not only as a fallback for <code>p_i + p_j == 0</code> (the singleton case): it continuously discounts the raw ratio by <code>w_ij</code> = (pair <code>(i,j)</code>’s own ambiguous-het count) / (all alt-carriers at this variant, any category), blending toward the arm’s GLA proportions renormalised to just this pair:</p>
+<pre><code><span><span class="va">p_i</span><span class="op">/</span><span class="op">(</span><span class="va">p_i</span><span class="op">+</span><span class="va">p_j</span><span class="op">)</span>  <span class="op">&lt;-</span>  <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">w_ij</span><span class="op">)</span> <span class="op">*</span> <span class="va">p_i</span><span class="op">/</span><span class="op">(</span><span class="va">p_i</span><span class="op">+</span><span class="va">p_j</span><span class="op">)</span> <span class="op">+</span> <span class="va">w_ij</span> <span class="op">*</span> <span class="va">GLA_i</span><span class="op">[</span><span class="va">arm</span><span class="op">]</span> <span class="op">/</span> <span class="op">(</span><span class="va">GLA_i</span><span class="op">[</span><span class="va">arm</span><span class="op">]</span> <span class="op">+</span> <span class="va">GLA_j</span><span class="op">[</span><span class="va">arm</span><span class="op">]</span><span class="op">)</span></span></code></pre>
+<p>Renormalising to the pair (instead of blending each population’s raw <code>GLA_k[arm]</code> in directly) is what guarantees an ambiguous AFR/EUR het is never assigned any dosage toward a third population like NAT, no matter how strongly shrinkage applies — only AFR and EUR ever receive a share. <code>w_ij = 0</code> leaves the raw ratio untouched; <code>w_ij = 1</code> (pair <code>(i,j)</code>’s only alt carriers are its own ambiguous hets) falls back entirely to the pair-conditioned GLA ratio instead of a flat 0.5/0.5 — same continuum as the two-population case, applied independently per pair.</p>
+</li>
 </ol>
-<p>With K=2 there’s only one mixed code and one pair, so this reduces exactly to the p1/p2 formulas above.</p>
+<p>With K=2 there’s only one mixed code and one pair, and <code>GLA_AFR[arm] + GLA_EUR[arm] = 1</code> by construction, so the pair-conditioned target collapses to plain <code>GLA_AFR[arm]</code> and this reduces exactly to the p1/p2 formulas above.</p>
 </div>
 </div>
 <div class="section level3">
@@ -723,14 +725,14 @@ chr19   518686  554919  1.17    1.35    85  0   0   0   1   ...</code></pre>
 </tr></tbody>
 </table>
 <p>Install bcftools via your system package manager:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># macOS</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># macOS</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="ex">brew</span> install bcftools</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co"># Debian / Ubuntu</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="fu">sudo</span> apt install bcftools</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co"># Conda / pixi</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> bioconda bcftools</span></code></pre></div>
 <p>The unphased splitting functions (<code>split_diploid</code>, <code>split_diploid_multi</code>, <code>ancestry_split_dosage</code>) do <strong>not</strong> require bcftools.</p>
 </div>
 <div class="section level3">
