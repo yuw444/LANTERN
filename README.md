@@ -206,7 +206,7 @@ representation there. LANTERN weights each population's p-value by how much
 pure-ancestry evidence backs it *at that specific gene*, rather than
 combining all $p_k$ equally:
 
-$$w_k(\text{gene}) = \text{median}_{v \,\in\, \text{gene}}\bigl(\text{count of cohort samples with pure ancestry } k \text{ at variant } v\bigr)$$
+$$w_k(\text{gene}) = \text{median}_{v \in \text{gene}}\bigl(\text{count of cohort samples with pure ancestry } k \text{ at variant } v\bigr)$$
 
 taking the median across the gene's variants (from `ancestry_split()`'s
 `ancestry_counts` output) so a handful of unusually ancestry-rich or
