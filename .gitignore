@@ -29,6 +29,7 @@ lantern.Rcheck/
 lantern.Rcmdcheck/
 .omo/*
 AGENTS.md
+CLAUDE.md
 
 ./test/1000G
 
