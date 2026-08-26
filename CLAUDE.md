@@ -77,10 +77,16 @@ that actually backs the `ancestry_split()`/`src/step1_*.R` pipeline) now
 shrink the raw ratio toward a **global local ancestry (GLA)** proportion:
 
 ```
-w  = N5 / (N1 + N2 + N4 + N5 + N7 + N8)   # fraction of alt-carriers that are ambiguous
+w  = N5 / (2*N1 + N2 + 2*N4 + N5 + 2*N7 + N8)   # ambiguous share of alt-allele confidence
 p1 = (1 - w) * p1_raw + w * GLA_AFR[arm]
 ```
 
+`w`'s denominator is `total_alt`, the same allele-weighted quantity used in
+`p1_raw`/`p2_raw` above: hom-alt carriers (`N1`, `N4`, `N7`) carry two alt
+alleles' worth of ancestry evidence, so they count 2x, same as they already
+do in the p1/p2 numerators — an unweighted per-*individual* denominator
+would under-count their confidence relative to het carriers and ambiguous
+mixed hets (`N5`, which carry only one, always-ambiguous, allele each).
 `w = 1` (all evidence ambiguous) reduces to `p1 = GLA_AFR` exactly, subsuming
 the old flat singleton fallback. GLA is computed once per chromosome arm
 (p/q, split at the centromere) in `.compute_arm_gla()`

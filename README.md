@@ -86,7 +86,13 @@ a per-chromosome-arm **global local ancestry (GLA)** proportion — computed
 directly from the RFMix tracts, not from genotypes — weighted by how much
 of the variant's own evidence is ambiguous:
 
-$$w = \frac{N_5}{N_1+N_2+N_4+N_5+N_7+N_8}, \qquad p_1 \leftarrow (1-w) p_1 + w \cdot \mathrm{GLA}_{\mathrm{AFR}}[\mathrm{arm}]$$
+$$w = \frac{N_5}{D+N_5}, \qquad p_1 \leftarrow (1-w) p_1 + w \cdot \mathrm{GLA}_{\mathrm{AFR}}[\mathrm{arm}]$$
+
+using $D$ from the raw formula above. Hom-alt carriers ($N_1, N_4, N_7$)
+count 2x toward this denominator, matching their 2x weight in $p_1$'s
+numerator, since each carries two alt alleles' worth of ancestry evidence
+versus one for a het or an ambiguous mixed het ($N_5$, which always carries
+exactly one, unresolved, allele).
 
 $w = 0$ (unambiguous carriers dominate) reduces to the raw formula above;
 $w = 1$ (the pure singleton, $D=0$) falls back entirely to the arm's GLA
@@ -126,9 +132,9 @@ By construction $p_1 + p_2 + p_3 = 1$.  Each mixed hom-alt individual (e.g. $N_7
 
 **GLA shrinkage.** Each mixed pair's ambiguous heterozygote count ($N_8$ for AFR/EUR, $N_{10}$ for AFR/NAT, $N_{12}$ for EUR/NAT) is shrunk the same way as the 2-ancestry case, toward the chromosome arm's GLA proportion conditioned on just that pair. For the AFR/EUR pair:
 
-$$w_{12} = \frac{N_8}{N_1+\cdots+N_{12}}, \qquad \mathrm{GLA}_{AFR\mid 12}[\mathrm{arm}] = \frac{\mathrm{GLA}_{AFR}[\mathrm{arm}]}{\mathrm{GLA}_{AFR}[\mathrm{arm}] + \mathrm{GLA}_{EUR}[\mathrm{arm}]} \quad (=0.5 \text{ if both are } 0), \qquad \frac{p_1}{p_1+p_2} \leftarrow (1-w_{12})\frac{p_1}{p_1+p_2} + w_{12}\cdot \mathrm{GLA}_{AFR\mid 12}[\mathrm{arm}]$$
+$$T = D + N_8 + N_{10} + N_{12}, \qquad w_{12} = \frac{N_8}{T}, \qquad \mathrm{GLA}_{AFR\mid 12}[\mathrm{arm}] = \frac{\mathrm{GLA}_{AFR}[\mathrm{arm}]}{\mathrm{GLA}_{AFR}[\mathrm{arm}] + \mathrm{GLA}_{EUR}[\mathrm{arm}]} \quad (=0.5 \text{ if both are } 0), \qquad \frac{p_1}{p_1+p_2} \leftarrow (1-w_{12})\frac{p_1}{p_1+p_2} + w_{12}\cdot \mathrm{GLA}_{AFR\mid 12}[\mathrm{arm}]$$
 
-and this shrunk ratio replaces $N_8$'s $\mathbf{x}_{AFR}/\mathbf{x}_{EUR}$ split above ($\mathbf{x}_{EUR} = 1 - \mathbf{x}_{AFR}$). $N_{10}$ (AFR/NAT) and $N_{12}$ (EUR/NAT) shrink identically, each toward its own pair's GLA-conditioned target. As in the 2-ancestry case, $w=1$ (a pair's only evidence is its own ambiguous hets) falls back entirely to the GLA-conditioned ratio instead of a flat 0.5/0.5, and `use_gla = FALSE` reproduces the raw pairwise ratio exactly.
+using $D$ from the raw formula above; $T$ (this variant's total allele-weighted confidence) adds every mixed pair's own ambiguous-het count on top — not just pair $12$'s — matching $D$'s existing 2x weighting of hom-alt carriers. $N_{10}$ (AFR/NAT) and $N_{12}$ (EUR/NAT) shrink identically off the same shared $T$ ($w_{9,10}=N_{10}/T$, $w_{11,12}=N_{12}/T$), each toward its own pair's GLA-conditioned target. $T$ is shared across all three pairs, so $w_{12}=1$ requires not just $D=0$ but also $N_{10}=N_{12}=0$ — i.e. this variant's *only* alt-carrying evidence, of any pair or population, is AFR/EUR ambiguous hets; that reduces exactly to the 2-ancestry pure-singleton case, since with K=2 there's only one pair to begin with. `use_gla = FALSE` reproduces the raw pairwise ratio exactly.
 
 ---
 
@@ -173,9 +179,9 @@ It follows that $\sum_{k=1}^{K} p_k = 1$.
 
 **GLA shrinkage (general $K$).** The formula above generalises **per pair**, not per population: each mixed pair $(i,j)$ gets its own ambiguous-fraction weight and its own shrinkage target, the arm's GLA proportions conditioned on just that pair.
 
-$$w_{ij} = \frac{N_{ij}^{(1)}}{\text{total alt-carriers at this variant (all pure + mixed types)}}, \qquad \mathrm{GLA}_{i\mid ij}[\mathrm{arm}] = \frac{\mathrm{GLA}_i[\mathrm{arm}]}{\mathrm{GLA}_i[\mathrm{arm}] + \mathrm{GLA}_j[\mathrm{arm}]} \quad (=0.5 \text{ if both are } 0), \qquad \frac{p_i}{p_i+p_j} \leftarrow (1-w_{ij})\frac{p_i}{p_i+p_j} + w_{ij}\cdot \mathrm{GLA}_{i\mid ij}[\mathrm{arm}]$$
+$$T = D + \sum_{i'<j'} N_{i'j'}^{(1)}, \qquad w_{ij} = \frac{N_{ij}^{(1)}}{T}, \qquad \mathrm{GLA}_{i\mid ij}[\mathrm{arm}] = \frac{\mathrm{GLA}_i[\mathrm{arm}]}{\mathrm{GLA}_i[\mathrm{arm}] + \mathrm{GLA}_j[\mathrm{arm}]} \quad (=0.5 \text{ if both are } 0), \qquad \frac{p_i}{p_i+p_j} \leftarrow (1-w_{ij})\frac{p_i}{p_i+p_j} + w_{ij}\cdot \mathrm{GLA}_{i\mid ij}[\mathrm{arm}]$$
 
-using the same $p_i$ from the population-proportion formula above (the full-variant estimate, not a pair-restricted recount) — so the raw ratio is defined even when pair $(i,j)$ itself has no unambiguous hom-alt carriers, as long as $i$ and $j$ each have unambiguous evidence elsewhere in the variant; it falls back to $\mathrm{GLA}_{i\mid ij}$ only if $p_i+p_j=0$ too. $w_{ij}=0$ recovers the raw pairwise ratio; $w_{ij}=1$ (pair $(i,j)$'s only alt carriers are its own ambiguous hets — the singleton case above) falls back entirely to $\mathrm{GLA}_{i\mid ij}[\mathrm{arm}]$ instead of a flat 0.5/0.5. `use_gla = FALSE` reproduces the raw per-pair ratio exactly, flat-0.5 fallback included.
+using $D$ from the denominator formula above and the same $p_i$ from the population-proportion formula (the full-variant estimate, not a pair-restricted recount) — so the raw ratio is defined even when pair $(i,j)$ itself has no unambiguous hom-alt carriers, as long as $i$ and $j$ each have unambiguous evidence elsewhere in the variant; it falls back to $\mathrm{GLA}_{i\mid ij}$ only if $p_i+p_j=0$ too. $T$ (this variant's total allele-weighted confidence) is shared across *every* pair, not recomputed per pair: it sums $D$ (which already counts hom-alt carriers, pure or mixed, 2x) plus *all* pairs' ambiguous-het counts, not just $(i,j)$'s. $w_{ij}=0$ recovers the raw pairwise ratio; $w_{ij}=1$ (this variant's only alt-carrying evidence, of any pair or population, is pair $(i,j)$'s own ambiguous hets — the singleton case above) falls back entirely to $\mathrm{GLA}_{i\mid ij}[\mathrm{arm}]$ instead of a flat 0.5/0.5. `use_gla = FALSE` reproduces the raw per-pair ratio exactly, flat-0.5 fallback included.
 
 **Number of ancestry types by K:**
 
